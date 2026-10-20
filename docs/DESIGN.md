@@ -1,6 +1,6 @@
 # Contrail design notes
 
-Status as of 2026-10-20: design stage. No code yet.
+Status as of 2026-10-20: milestone 1 (sound engine and plugin shell) built. Next: the panel (milestone 2), then tuning by ear (milestone 3).
 
 ## Concept
 - Tape-style pitch movement: wow, flutter and vintage character. It is not a delay.
@@ -48,3 +48,12 @@ Each format sets its own wow, flutter, tone and noise.
 - The `docs/mockup/*.dc.html` files are design-canvas boards: AboveClouds is the interactive panel, and AllFormats shows all six skies.
 - Each board holds its sky data in a `SKIES` array, which the plugin should match.
 - They need the canvas runtime (`support.js`) to render. The live version is the mockup link in the README.
+
+## Decisions made while building milestone 1 (2026-10-20)
+- Wow and Flutter knobs are peak speed deviation in % (0 to 2% and 0 to 1%).
+- Drift is 0 to 100%, shown as Steady, Slow, Medium, Fast or Wander. Age is 0 to 100%, shown as New, Light, Medium or Heavy.
+- Drive is -6 to +18 dB into the tape, with the same amount taken off after.
+- The Sync button turns tempo sync on; the Rate setting is its note value, and reads "Free" when Sync is off.
+- Bias is a host parameter (nominal 50) for now; the panel has no knob for it.
+- Fixed 25 ms latency so Mix and bypass line up exactly.
+- Presets and A/B leave Bypass and Tape Stop alone.
