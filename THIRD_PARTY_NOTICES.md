@@ -9,6 +9,10 @@ Contrail contains no third-party source code. Its DSP is written from published 
   Recording*, Cambridge University Press, 1994.
 - **Filters:** R. Bristow-Johnson, "Cookbook formulae for audio EQ biquad filter coefficients".
 
+The panel embeds two typefaces under the SIL Open Font License 1.1 (licences in
+`resources/fonts/`): **Cormorant Garamond** (the Cormorant Project Authors) and **Jost** (the
+Jost Project Authors).
+
 Built with JUCE 8 (https://juce.com) and tested with Catch2 (BSL-1.0).
 
 Airwindows' MIT-licensed tape plugins were agreed as an allowed source (2026-10-20). None of

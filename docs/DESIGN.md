@@ -1,6 +1,6 @@
 # Contrail design notes
 
-Status as of 2026-10-20: milestone 1 (sound engine and plugin shell) built. Next: the panel (milestone 2), then tuning by ear (milestone 3).
+Status as of 2026-10-20: milestone 1 (sound engine and plugin shell) and milestone 2 (the panel) built. Next: tuning by ear (milestone 3).
 
 ## Concept
 - Tape-style pitch movement: wow, flutter and vintage character. It is not a delay.
@@ -58,3 +58,11 @@ Each format sets its own wow, flutter, tone and noise.
 - Fixed 25 ms latency so Mix and bypass line up exactly.
 - Presets and A/B leave Bypass and Tape Stop alone.
 - Tuning 1 (Jack, 2026-10-20): VHS wobble made more obvious (Wow 0.75%, faster and lumpier wow). Distortion smoothed: narrower hysteresis loops (as properly biased tape), 3 dB more headroom before the knee, and a touch of second harmonic for warmth. Formats re-levelled.
+
+## Decisions made while building milestone 2 (2026-10-20)
+- The panel is drawn in `source/ui/CloudSky.cpp` from the mockup's `SKIES` data, at 1040 x 620 units, scaled as a whole when the window is resized (70% to 150%).
+- The contrails' bend follows the Wow knob's position (amplitude 2 + 10 x position), as in the mockup.
+- CSS blend modes the plugin can't draw are approximated: VHS's ghost suns sit behind the sun (screened over it they only show as fringes), and the film grain is a light speckle kept off the sun.
+- Rate opens a menu: picking a note value turns Sync on, and Free turns it off.
+- Format buttons don't dim when bypassed (as in the mockup); the knobs, pills and settings do.
+- With Reduce Motion on, the sky holds still and changes are instant.

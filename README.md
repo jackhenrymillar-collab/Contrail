@@ -8,9 +8,9 @@ Catch2 tests.
 - Panel mockup (live): https://claude.ai/artifact/5ad5qni5t34CJ2CtbY2Y8p
 - Mockup sources: [docs/mockup/](docs/mockup/)
 
-**Status: milestone 1 (sound engine and plugin shell).** All six formats, every knob and
-switch, presets, A/B and per-format knob memory work. The panel is a plain placeholder
-until the "Above the clouds" panel lands (milestone 2).
+**Status: milestone 2 (the "Above the clouds" panel).** All six formats, every knob and
+switch, presets, A/B and per-format knob memory work, behind the animated panel from the
+mockup. Next: tuning by ear (milestone 3).
 
 ## Building on macOS
 
@@ -29,6 +29,10 @@ in `build/Contrail_artefacts/Release/` and copies the VST3 and AU into `~/Librar
 Audio previews: configure with `-DCONTRAIL_BUILD_RENDER=ON` and run
 `build/contrail_render <out-dir>`. It renders a short electric piano clip dry, through each
 format, and through a Tape Stop and Start.
+
+Panel snapshots: configure with `-DCONTRAIL_BUILD_SNAPSHOT=ON` and run
+`ContrailSnapshot <out-dir> [preset-number] [seconds] [fps] [scale] [param=value ...]`. With
+seconds = 0 it writes one still (`panel.png`); otherwise numbered frames.
 
 ## The signal path
 

@@ -17,6 +17,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(CONTRAIL_BUILD_PLUGIN "Build the JUCE plugin (VST3, AU, Standalone)" ON)
 option(CONTRAIL_BUILD_TESTS "Build the DSP unit tests" ON)
 option(CONTRAIL_BUILD_RENDER "Build the tool that renders audio previews (development only)" OFF)
+option(CONTRAIL_BUILD_SNAPSHOT "Build a tool that renders the panel to PNG (development only)" OFF)
 
 include(FetchContent)
 
@@ -50,6 +51,29 @@ if(CONTRAIL_BUILD_PLUGIN)
         FetchContent_MakeAvailable(JUCE)
     endif()
 
+    # The panel's two typefaces (SIL Open Font License, see resources/fonts).
+    juce_add_binary_data(ContrailAssets
+        HEADER_NAME ContrailAssets.h
+        NAMESPACE ContrailAssets
+        SOURCES
+            resources/fonts/CormorantGaramond-Medium.ttf
+            resources/fonts/CormorantGaramond-SemiBold.ttf
+            resources/fonts/Jost-Regular.ttf
+            resources/fonts/Jost-Medium.ttf)
+    set_target_properties(ContrailAssets PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+    set(CONTRAIL_UI_SOURCES
+        source/PluginEditor.cpp
+        source/PresetManager.cpp
+        source/ui/CloudSky.cpp
+        source/ui/Controls.cpp
+        source/ui/Theme.cpp)
+    if(APPLE)
+        list(APPEND CONTRAIL_UI_SOURCES source/ui/ReducedMotion.mm)
+    else()
+        list(APPEND CONTRAIL_UI_SOURCES source/ui/ReducedMotion.cpp)
+    endif()
+
     juce_add_plugin(Contrail
         PRODUCT_NAME "Contrail"
         COMPANY_NAME "Overcast Audio"
@@ -68,9 +92,8 @@ if(CONTRAIL_BUILD_PLUGIN)
 
     target_sources(Contrail PRIVATE
         source/PluginProcessor.cpp
-        source/PluginEditor.cpp
         source/Parameters.cpp
-        source/PresetManager.cpp)
+        ${CONTRAIL_UI_SOURCES})
     target_include_directories(Contrail PRIVATE source)
 
     target_compile_definitions(Contrail PUBLIC
@@ -82,11 +105,32 @@ if(CONTRAIL_BUILD_PLUGIN)
     target_link_libraries(Contrail
         PRIVATE
             contrail_dsp
+            ContrailAssets
             juce::juce_audio_utils
         PUBLIC
             juce::juce_recommended_config_flags
             juce::juce_recommended_lto_flags
             juce::juce_recommended_warning_flags)
+
+    if(CONTRAIL_BUILD_SNAPSHOT)
+        juce_add_console_app(ContrailSnapshot PRODUCT_NAME "ContrailSnapshot")
+        target_sources(ContrailSnapshot PRIVATE
+            tools/Snapshot.cpp
+            source/PluginProcessor.cpp
+            source/Parameters.cpp
+            ${CONTRAIL_UI_SOURCES})
+        target_include_directories(ContrailSnapshot PRIVATE source)
+        target_compile_definitions(ContrailSnapshot PRIVATE
+            JucePlugin_Name="Contrail"
+            JUCE_MODAL_LOOPS_PERMITTED=1
+            JUCE_WEB_BROWSER=0
+            JUCE_USE_CURL=0)
+        target_link_libraries(ContrailSnapshot PRIVATE
+            contrail_dsp
+            ContrailAssets
+            juce::juce_audio_utils
+            juce::juce_recommended_config_flags)
+    endif()
 endif()
 
 # ---------------------------------------------------------------------------
