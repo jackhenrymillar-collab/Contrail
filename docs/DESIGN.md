@@ -57,3 +57,4 @@ Each format sets its own wow, flutter, tone and noise.
 - Bias is a host parameter (nominal 50) for now; the panel has no knob for it.
 - Fixed 25 ms latency so Mix and bypass line up exactly.
 - Presets and A/B leave Bypass and Tape Stop alone.
+- Tuning 1 (Jack, 2026-10-20): VHS wobble made more obvious (Wow 0.75%, faster and lumpier wow). Distortion smoothed: narrower hysteresis loops (as properly biased tape), 3 dB more headroom before the knee, and a touch of second harmonic for warmth. Formats re-levelled.

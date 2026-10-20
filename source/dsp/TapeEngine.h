@@ -59,6 +59,7 @@ public:
     static constexpr int kControlBlock = 32;
     static constexpr float kFormatMorphMs = 150.0f;
     static constexpr float kBypassFadeMs = 20.0f;
+    static constexpr float kTapeHeadroom = 0.7f;
 
     TapeEngine();
 
@@ -98,6 +99,7 @@ private:
     std::array<Oversampler, 2> oversamplers;
     std::array<Hysteresis, 2> hysteresis;
     std::array<Biquad, 2> preEmphasis, deEmphasis;
+    std::array<DcBlocker, 2> recordDc;
     float appliedEmphasis = -100.0f;
 
     // Transport.
@@ -114,7 +116,7 @@ private:
     float appliedToneLow = -100.0f, appliedToneHigh = -100.0f;
 
     // Smoothed values.
-    Smoother driveGain, wetGain, mixAmount, hissGain, width;
+    Smoother driveGain, wetGain, mixAmount, hissGain, width, asymmetry;
     Smoother wowSmooth, flutterSmooth, driftSmooth, ageSmooth, toneSmooth, biasSmooth;
     float bypassMix = 1.0f, bypassStep = 0.001f; // 1 = effect on
 

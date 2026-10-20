@@ -40,6 +40,7 @@ constexpr int kNumFormats = 6;
     X (emphasisDb)      /* record pre-emphasis: highs saturate first, like real tape */           \
     X (saturation)      /* hysteresis saturation, 0 to 1 */                                        \
     X (hysteresisWidth) /* hysteresis loop width at nominal bias, 0 to 1 */                       \
+    X (asymmetry)       /* even-harmonic warmth from a slightly lopsided record path */          \
     /* Noise and wear */                                                                           \
     X (hissDb)          /* hiss level at Age 0, dBFS RMS */                                        \
     X (hissAgeDb)       /* extra hiss at Age 100% */                                               \
@@ -83,7 +84,7 @@ inline const FormatProfile& formatProfile (int index) noexcept
         p[0].speedIps = 15.0f;   p[0].gapUm = 2.5f;  p[0].ageSpacingUm = 0.6f;
         p[0].bandwidthHz = 21000.0f; p[0].bandwidthOrder = 2.0f; p[0].lowCutHz = 18.0f;
         p[0].bumpHz = 55.0f;  p[0].bumpDb = 2.2f;  p[0].bumpQ = 1.0f; p[0].stereoWidth = 1.0f;
-        p[0].emphasisDb = 3.0f; p[0].saturation = 0.40f; p[0].hysteresisWidth = 0.45f;
+        p[0].emphasisDb = 3.0f; p[0].saturation = 0.40f; p[0].hysteresisWidth = 0.12f; p[0].asymmetry = 0.03f;
         p[0].hissDb = -84.0f; p[0].hissAgeDb = 8.0f; p[0].dropoutRate = 0.08f; p[0].dropoutDepthDb = 6.0f;
         p[0].reelHz = 0.55f; p[0].reelHarmonic = 0.20f; p[0].randomWowHz = 0.45f;
         p[0].flutterHz = 9.0f; p[0].flutterHz2 = 23.0f; p[0].scrape = 0.15f;
@@ -93,7 +94,7 @@ inline const FormatProfile& formatProfile (int index) noexcept
         p[1].speedIps = 7.5f;    p[1].gapUm = 3.0f;  p[1].ageSpacingUm = 0.8f;
         p[1].bandwidthHz = 15500.0f; p[1].bandwidthOrder = 2.0f; p[1].lowCutHz = 25.0f;
         p[1].bumpHz = 42.0f;  p[1].bumpDb = 2.0f;  p[1].bumpQ = 1.1f; p[1].stereoWidth = 1.0f;
-        p[1].emphasisDb = 4.0f; p[1].saturation = 0.50f; p[1].hysteresisWidth = 0.50f;
+        p[1].emphasisDb = 4.0f; p[1].saturation = 0.50f; p[1].hysteresisWidth = 0.18f; p[1].asymmetry = 0.05f;
         p[1].hissDb = -74.0f; p[1].hissAgeDb = 8.0f; p[1].dropoutRate = 0.15f; p[1].dropoutDepthDb = 8.0f;
         p[1].reelHz = 0.85f; p[1].reelHarmonic = 0.30f; p[1].randomWowHz = 0.65f;
         p[1].flutterHz = 7.0f; p[1].flutterHz2 = 17.0f; p[1].scrape = 0.20f;
@@ -103,7 +104,7 @@ inline const FormatProfile& formatProfile (int index) noexcept
         p[2].speedIps = 1.875f;  p[2].gapUm = 1.2f;  p[2].ageSpacingUm = 0.6f;
         p[2].bandwidthHz = 12500.0f; p[2].bandwidthOrder = 3.0f; p[2].lowCutHz = 35.0f;
         p[2].bumpHz = 75.0f;  p[2].bumpDb = 1.5f;  p[2].bumpQ = 1.0f; p[2].stereoWidth = 1.0f;
-        p[2].emphasisDb = 6.0f; p[2].saturation = 0.60f; p[2].hysteresisWidth = 0.60f;
+        p[2].emphasisDb = 6.0f; p[2].saturation = 0.60f; p[2].hysteresisWidth = 0.25f; p[2].asymmetry = 0.06f;
         p[2].hissDb = -64.0f; p[2].hissAgeDb = 7.0f; p[2].dropoutRate = 0.30f; p[2].dropoutDepthDb = 10.0f;
         p[2].reelHz = 1.3f;  p[2].reelHarmonic = 0.35f; p[2].randomWowHz = 0.9f;
         p[2].flutterHz = 12.0f; p[2].flutterHz2 = 28.0f; p[2].scrape = 0.30f;
@@ -113,7 +114,7 @@ inline const FormatProfile& formatProfile (int index) noexcept
         p[3].speedIps = 1.875f;  p[3].gapUm = 1.6f;  p[3].ageSpacingUm = 1.1f;
         p[3].bandwidthHz = 9500.0f; p[3].bandwidthOrder = 3.0f; p[3].lowCutHz = 50.0f;
         p[3].bumpHz = 75.0f;  p[3].bumpDb = 1.0f;  p[3].bumpQ = 0.9f; p[3].stereoWidth = 0.9f;
-        p[3].emphasisDb = 7.0f; p[3].saturation = 0.72f; p[3].hysteresisWidth = 0.72f;
+        p[3].emphasisDb = 7.0f; p[3].saturation = 0.72f; p[3].hysteresisWidth = 0.40f; p[3].asymmetry = 0.10f;
         p[3].hissDb = -60.0f; p[3].hissAgeDb = 6.0f; p[3].dropoutRate = 1.2f; p[3].dropoutDepthDb = 16.0f;
         p[3].reelHz = 1.05f; p[3].reelHarmonic = 0.55f; p[3].randomWowHz = 0.75f;
         p[3].flutterHz = 10.0f; p[3].flutterHz2 = 25.0f; p[3].scrape = 0.50f;
@@ -123,9 +124,9 @@ inline const FormatProfile& formatProfile (int index) noexcept
         p[4].speedIps = 1.31f;   p[4].gapUm = 1.5f;  p[4].ageSpacingUm = 0.7f;
         p[4].bandwidthHz = 9000.0f; p[4].bandwidthOrder = 3.0f; p[4].lowCutHz = 60.0f;
         p[4].bumpHz = 95.0f;  p[4].bumpDb = 1.0f;  p[4].bumpQ = 0.9f; p[4].stereoWidth = 0.75f;
-        p[4].emphasisDb = 5.0f; p[4].saturation = 0.55f; p[4].hysteresisWidth = 0.60f;
+        p[4].emphasisDb = 5.0f; p[4].saturation = 0.55f; p[4].hysteresisWidth = 0.25f; p[4].asymmetry = 0.06f;
         p[4].hissDb = -63.0f; p[4].hissAgeDb = 6.0f; p[4].dropoutRate = 0.40f; p[4].dropoutDepthDb = 10.0f;
-        p[4].reelHz = 0.33f; p[4].reelHarmonic = 0.20f; p[4].randomWowHz = 0.40f;
+        p[4].reelHz = 0.45f; p[4].reelHarmonic = 0.35f; p[4].randomWowHz = 0.55f;
         p[4].flutterHz = 8.0f; p[4].flutterHz2 = 20.0f; p[4].scrape = 0.25f;
         p[4].stopSeconds = 1.1f; p[4].startSeconds = 0.6f;
 
@@ -133,7 +134,7 @@ inline const FormatProfile& formatProfile (int index) noexcept
         p[5].speedIps = 0.94f;   p[5].gapUm = 2.0f;  p[5].ageSpacingUm = 0.6f;
         p[5].bandwidthHz = 5200.0f; p[5].bandwidthOrder = 4.0f; p[5].lowCutHz = 220.0f;
         p[5].bumpHz = 320.0f; p[5].bumpDb = 3.0f;  p[5].bumpQ = 0.8f; p[5].stereoWidth = 0.3f;
-        p[5].emphasisDb = 6.0f; p[5].saturation = 0.78f; p[5].hysteresisWidth = 0.70f;
+        p[5].emphasisDb = 6.0f; p[5].saturation = 0.78f; p[5].hysteresisWidth = 0.35f; p[5].asymmetry = 0.10f;
         p[5].hissDb = -54.0f; p[5].hissAgeDb = 5.0f; p[5].dropoutRate = 0.30f; p[5].dropoutDepthDb = 10.0f;
         p[5].reelHz = 2.8f;  p[5].reelHarmonic = 0.40f; p[5].randomWowHz = 2.0f;
         p[5].flutterHz = 18.0f; p[5].flutterHz2 = 33.0f; p[5].scrape = 0.40f;
@@ -141,7 +142,7 @@ inline const FormatProfile& formatProfile (int index) noexcept
 
         // Loudness match (pink noise at -18 dBFS through each format's factory settings).
         // Measured by the "formats are loudness matched" test.
-        const float trims[kNumFormats] = { -0.6f, -0.2f, 0.1f, 0.7f, 1.6f, 4.9f };
+        const float trims[kNumFormats] = { 0.5f, 0.95f, 1.4f, 2.7f, 3.3f, 6.7f };
         for (std::size_t i = 0; i < p.size(); ++i)
             p[i].trimDb = trims[i];
         return p;
@@ -163,7 +164,7 @@ inline constexpr std::array<FormatKnobs, kNumFormats> kFormatDefaults { {
     { 0.08f, 0.05f, 30.0f, 4.0f, 25.0f,   0.0f, 100.0f }, // Home Reel
     { 0.15f, 0.10f, 50.0f, 5.0f, 30.0f, -10.0f, 100.0f }, // Cassette
     { 0.45f, 0.25f, 85.0f, 6.0f, 85.0f, -25.0f, 100.0f }, // Worn Cassette
-    { 0.30f, 0.12f, 50.0f, 2.0f, 55.0f, -30.0f, 100.0f }, // VHS
+    { 0.75f, 0.15f, 55.0f, 2.0f, 55.0f, -30.0f, 100.0f }, // VHS
     { 0.25f, 0.40f, 70.0f, 8.0f, 60.0f, -40.0f, 100.0f }, // Dictaphone
 } };
 

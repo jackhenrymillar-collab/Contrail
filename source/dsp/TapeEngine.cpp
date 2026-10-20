@@ -28,6 +28,7 @@ void TapeEngine::prepare (double sampleRate, int maxBlockSize)
     transport.prepare (sampleRate, baseDelay);
     wowFlutter.prepare (sampleRate, static_cast<float> (baseDelay - InterpolatedDelay::kMinDelay - 4.0));
 
+    for (auto& d : recordDc) d.prepare (sampleRate);
     hiss.prepare (sampleRate);
     dropouts.prepare (sampleRate);
 
@@ -39,6 +40,7 @@ void TapeEngine::prepare (double sampleRate, int maxBlockSize)
     mixAmount.prepare (sampleRate, 20.0f);
     hissGain.prepare (sampleRate, 60.0f);
     width.prepare (sampleRate, 60.0f);
+    asymmetry.prepare (sampleRate, 60.0f);
     const double controlRate = sampleRate / kControlBlock;
     wowSmooth.prepare (controlRate, 60.0f);
     flutterSmooth.prepare (controlRate, 60.0f);
@@ -60,6 +62,7 @@ void TapeEngine::reset()
     for (auto& h : hysteresis) h.reset();
     for (auto& b : preEmphasis) b.reset();
     for (auto& b : deEmphasis) b.reset();
+    for (auto& d : recordDc) d.reset();
     for (auto& b : bump) b.reset();
     for (auto& b : lowCut) b.reset();
     for (auto& b : toneLow) b.reset();
@@ -84,6 +87,7 @@ void TapeEngine::reset()
     mixAmount.snapTo (params.mix);
     hissGain.snapTo (params.noise ? dbToGain (profile.hissDb + profile.hissAgeDb * params.age) : 0.0f);
     width.snapTo (profile.stereoWidth);
+    asymmetry.snapTo (profile.asymmetry);
     wowSmooth.snapTo (params.wowPercent);
     flutterSmooth.snapTo (params.flutterPercent);
     driftSmooth.snapTo (params.drift);
@@ -140,6 +144,7 @@ void TapeEngine::updateControls() noexcept
     mixAmount.setTarget (params.mix);
     hissGain.setTarget (params.noise ? dbToGain (f.hissDb + f.hissAgeDb * age) : 0.0f);
     width.setTarget (f.stereoWidth);
+    asymmetry.setTarget (f.asymmetry);
 
     // Wow and flutter, with the host tempo if Sync is on.
     WowFlutterParams wf;
@@ -164,8 +169,9 @@ void TapeEngine::updateControls() noexcept
 
     transport.setTimes (f.stopSeconds, f.startSeconds);
 
-    // Recording: the loop narrows as bias rises.
-    const float hystWidth = std::clamp (f.hysteresisWidth + (0.5f - bias) * 0.6f, 0.0f, 0.98f);
+    // Recording: the loop narrows as bias rises. Under-biased tape keeps more of its loop,
+    // which is what makes quiet passages grainy.
+    const float hystWidth = std::clamp (f.hysteresisWidth + (0.5f - bias) * 0.5f, 0.0f, 0.95f);
     for (auto& h : hysteresis)
         h.setParams (f.saturation, hystWidth);
     if (std::abs (f.emphasisDb - appliedEmphasis) > 1.0e-3f)
@@ -237,16 +243,23 @@ void TapeEngine::process (float* left, float* right, int numSamples) noexcept
 
         // Record: Drive pushes the level into the tape; the same amount comes off after,
         // so Drive changes the saturation, not the loudness of quiet passages.
-        const float g = driveGain.next();
+        // kTapeHeadroom sets where saturation starts: 0 dBFS at 0 dB Drive sits about
+        // 3 dB under the tape's knee, so normal levels stay clean-ish and warm.
+        const float g = driveGain.next() * kTapeHeadroom;
         const float makeup = 1.0f / g;
         auto& h0 = hysteresis[0];
         auto& h1 = hysteresis[1];
-        float l = preEmphasis[0].process (inL * g);
-        float r = preEmphasis[1].process (inR * g);
+        // A slightly lopsided record path adds a little second harmonic (warmth) that
+        // grows with Drive. The DC it makes is taken out after the tape.
+        const float k = asymmetry.next();
+        float l = inL * g;
+        float r = inR * g;
+        l = preEmphasis[0].process (l + k * l * l);
+        r = preEmphasis[1].process (r + k * r * r);
         l = oversamplers[0].process (l, [&h0] (float v) { return h0.process (v); });
         r = oversamplers[1].process (r, [&h1] (float v) { return h1.process (v); });
-        l = deEmphasis[0].process (l) * makeup;
-        r = deEmphasis[1].process (r) * makeup;
+        l = recordDc[0].process (deEmphasis[0].process (l) * makeup);
+        r = recordDc[1].process (deEmphasis[1].process (r) * makeup);
 
         // Transport.
         float offL, offR;
