@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contrail panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Jost:wght@300;400;500&amp;display=swap">
+<style>
+body{margin:0;background:#0b0b1a}
+@keyframes ct-drift{0%{transform:translateX(0)}100%{transform:translateX(-36px)}}
+@keyframes ct-wow{0%,100%{transform:translateX(0) scaleX(1)}25%{transform:translateX(3px) scaleX(1.08)}50%{transform:translateX(-2px) scaleX(0.94)}75%{transform:translateX(2px) scaleX(1.04)}}
+@keyframes ct-glow{0%,100%{opacity:.85}50%{opacity:1}}
+@keyframes ct-twinkle{0%,100%{opacity:.15}50%{opacity:.7}}
+@keyframes ct-plane{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}
+.ct-drift{animation:ct-drift 26s ease-in-out infinite alternate}
+.ct-wow{animation:ct-wow 3.2s ease-in-out infinite;transform-origin:880px 0}
+.ct-glow{animation:ct-glow 7s ease-in-out infinite}
+.ct-tw{animation:ct-twinkle 5s ease-in-out infinite}
+.ct-plane{animation:ct-plane 2.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.ct-drift,.ct-wow,.ct-glow,.ct-tw,.ct-plane{animation:none}}
+button{font:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #f2c27b;outline-offset:2px}
+</style>
+</helmet>
+<div style="position: relative; width: 1040px; height: 620px; overflow: hidden; border-radius: 14px; font-family: 'Jost', system-ui, sans-serif; color: #f6ead8; background: #0b0b1a;">
+
+  <!-- Sky -->
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 1040px; height: 240px; background: linear-gradient(180deg, #17193d 0%, #2f2a5c 45%, #5b3a6e 75%, #9a5670 92%, #d98a6e 100%); opacity: {{skyOpacity}};"></div>
+  <div aria-hidden="true" class="ct-glow" style="position: absolute; left: 460px; top: -60px; width: 840px; height: 600px; background: radial-gradient(closest-side, rgba(255,196,120,0.55), rgba(240,140,100,0.28) 40%, rgba(200,100,120,0.08) 70%, rgba(200,100,120,0) 100%); opacity: {{glowOpacity}};"></div>
+
+  <!-- Last stars of the night -->
+  <div aria-hidden="true">
+    <sc-for list="{{stars}}" as="s" hint-placeholder-count="12">
+      <div class="ct-tw" style="{{s.style}}"></div>
+    </sc-for>
+  </div>
+
+  <!-- Contrails: a jet trail and an older, spreading one. Wow bends them. -->
+  <svg aria-hidden="true" class="ct-drift" width="1120" height="200" viewBox="0 0 1120 200" style="position: absolute; left: 0; top: 30px; overflow: visible;">
+    <defs>
+      <linearGradient id="ctTrailA" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#ffe6d6" stop-opacity="0"></stop>
+        <stop offset="0.55" stop-color="#ffe6d6" stop-opacity="0.55"></stop>
+        <stop offset="1" stop-color="#fff4ea" stop-opacity="0.95"></stop>
+      </linearGradient>
+      <linearGradient id="ctTrailB" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#f7c9c0" stop-opacity="0"></stop>
+        <stop offset="0.5" stop-color="#f7c9c0" stop-opacity="0.32"></stop>
+        <stop offset="1" stop-color="#f7c9c0" stop-opacity="0.12"></stop>
+      </linearGradient>
+      <filter id="ctSoft" x="-10%" y="-200%" width="120%" height="500%"><feGaussianBlur stdDeviation="3"></feGaussianBlur></filter>
+    </defs>
+    <path d="{{trailOld}}" fill="none" stroke="url(#ctTrailB)" stroke-width="9" stroke-linecap="round" filter="url(#ctSoft)"></path>
+    <path d="{{trailGlow}}" fill="none" stroke="url(#ctTrailA)" stroke-width="6" stroke-linecap="round" filter="url(#ctSoft)" opacity="0.6"></path>
+    <path d="{{trailGlow}}" fill="none" stroke="url(#ctTrailA)" stroke-width="1.6" stroke-linecap="round"></path>
+    <circle class="ct-plane" cx="{{planeX}}" cy="{{planeY}}" r="2.4" fill="#fffaf2"></circle>
+  </svg>
+
+  <!-- The sun, half risen; click it to bypass -->
+  <div aria-hidden="true" style="position: absolute; left: 790px; top: {{sunGlowTop}}px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,214,140,0.9), rgba(255,170,90,0.35) 55%, rgba(255,150,80,0) 100%); transition: top 1.2s ease;"></div>
+  <button aria-label="{{sunLabel}}" aria-pressed="{{bypassed}}" onClick="{{toggleBypass}}" style="position: absolute; left: 830px; top: {{sunTop}}px; width: 100px; height: 100px; border-radius: 50%; border: 0; padding: 0; background: radial-gradient(circle at 50% 45%, #fff3d2 0%, #ffd98c 40%, #ffb066 75%, #f49158 100%); box-shadow: 0 0 40px rgba(255,190,110,0.7); transition: top 1.2s ease;"></button>
+
+  <!-- Distant hills on the horizon -->
+  <svg aria-hidden="true" width="1040" height="60" viewBox="0 0 1040 60" style="position: absolute; left: 0; top: 196px;">
+    <path d="M0 44 C60 30 110 22 170 30 C230 38 260 18 330 20 C400 22 430 40 500 38 C560 36 600 30 650 36 C700 42 730 44 770 44 L770 60 L0 60 Z" fill="#2a2141"></path>
+    <path d="M0 50 C80 42 150 40 220 44 C300 48 360 40 420 44 C480 48 540 46 600 48 L600 60 L0 60 Z" fill="#221a37"></path>
+  </svg>
+
+  <!-- Water, with the sun's reflection wobbling like wow -->
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 240px; width: 1040px; height: 380px; background: linear-gradient(180deg, #3b2a4c 0%, #231d3c 22%, #15142b 55%, #0c0c1c 100%);"></div>
+  <div aria-hidden="true" class="ct-wow" style="position: absolute; left: 0; top: 242px; width: 1040px; height: 300px; opacity: {{glowOpacity}};">
+    <sc-for list="{{ripples}}" as="r" hint-placeholder-count="14">
+      <div style="{{r.style}}"></div>
+    </sc-for>
+  </div>
+
+  <!-- Header -->
+  <div style="position: absolute; left: 40px; top: 26px; display: flex; align-items: center; gap: 12px;">
+    <svg aria-hidden="true" width="26" height="26" viewBox="0 0 26 26"><path d="M5 17 A8 8 0 0 1 21 17" fill="#f6c27e"></path><line x1="2" y1="17.5" x2="24" y2="17.5" stroke="#f6ead8" stroke-width="1.4" stroke-linecap="round"></line><path d="M3 9 C9 6 15 11 23 6" fill="none" stroke="#f6ead8" stroke-width="1.2" stroke-linecap="round" opacity="0.8"></path></svg>
+    <div style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 30px; font-weight: 500; letter-spacing: 0.32em; color: #f6ead8;">CONTRAIL</div>
+  </div>
+
+  <div style="position: absolute; left: 372px; top: 22px; width: 296px; height: 46px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(246,214,180,0.28); border-radius: 12px; background: rgba(18,16,40,0.55); padding: 0 6px;">
+    <button aria-label="Previous preset" onClick="{{prevPreset}}" style="width: 44px; height: 36px; border: 0; background: transparent; color: #f2c27b; font-size: 20px;">‹</button>
+    <div style="font-size: 15px; color: #f6ead8;"><span style="color: #c9bccf; margin-right: 10px;">{{presetNumber}}</span>{{presetName}}</div>
+    <button aria-label="Next preset" onClick="{{nextPreset}}" style="width: 44px; height: 36px; border: 0; background: transparent; color: #f2c27b; font-size: 20px;">›</button>
+  </div>
+
+  <div style="position: absolute; right: 40px; top: 24px; display: flex; gap: 8px;">
+    <button style="height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(246,214,180,0.3); background: rgba(18,16,40,0.55); color: #f6ead8; font-size: 12px; letter-spacing: 0.18em;"><span style="color: #f2c27b;">A</span> / B</button>
+    <button style="height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(246,214,180,0.3); background: rgba(18,16,40,0.55); color: #f6ead8; font-size: 12px; letter-spacing: 0.18em;">SAVE</button>
+  </div>
+
+  <!-- Format title -->
+  <div style="position: absolute; left: 40px; top: 112px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="font-size: 12px; letter-spacing: 0.3em; color: #e3d3e2;">{{formatLabel}}</div>
+    <div style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 52px; font-weight: 500; line-height: 1.05; color: #fbf1e4;">{{formatName}}</div>
+    <div style="font-size: 15px; font-weight: 300; color: #f6ead8;">{{formatDesc}}</div>
+  </div>
+
+  <!-- Format buttons -->
+  <div style="position: absolute; left: 40px; top: 262px; width: 960px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px;">
+    <sc-for list="{{formats}}" as="f" hint-placeholder-count="6">
+      <button aria-pressed="{{f.selected}}" onClick="{{f.pick}}" style="{{f.style}}">{{f.name}}</button>
+    </sc-for>
+  </div>
+
+  <!-- Knobs -->
+  <div style="position: absolute; left: 40px; top: 334px; width: 960px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; opacity: {{controlsOpacity}};">
+    <sc-for list="{{knobs}}" as="k" hint-placeholder-count="7">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <div style="position: relative; width: 86px; height: 86px; border-radius: 50%; background: radial-gradient(circle at 38% 30%, #514a7e 0%, #2c2752 55%, #1a1733 100%); box-shadow: 0 10px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,230,200,0.18); border: 1px solid rgba(242,194,123,0.22);">
+          <div style="{{k.dial}}">
+            <div style="position: absolute; left: 39px; top: 7px; width: 8px; height: 8px; border-radius: 50%; background: #ffd99a; box-shadow: 0 0 8px rgba(255,200,120,0.9);"></div>
+          </div>
+        </div>
+        <div style="font-size: 12px; letter-spacing: 0.2em; color: #d9cbe0;">{{k.label}}</div>
+        <div style="font-size: 15px; color: #f6ead8; margin-top: -4px;">{{k.value}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- Bottom row -->
+  <div style="position: absolute; left: 40px; top: 552px; display: flex; gap: 10px; opacity: {{controlsOpacity}};">
+    <sc-for list="{{pills}}" as="p" hint-placeholder-count="3">
+      <button aria-pressed="{{p.on}}" onClick="{{p.toggle}}" style="{{p.style}}">{{p.label}}</button>
+    </sc-for>
+  </div>
+  <div style="position: absolute; right: 40px; top: 562px; display: flex; gap: 28px; font-size: 12px; letter-spacing: 0.2em; color: #d9cbe0; opacity: {{controlsOpacity}};">
+    <div>RATE <span style="color: #f6ead8; letter-spacing: 0.05em; margin-left: 6px;">Free</span></div>
+    <div>STEREO <span style="color: #f6ead8; letter-spacing: 0.05em; margin-left: 6px;">Wide</span></div>
+    <div>OUTPUT <span style="color: #f6ead8; letter-spacing: 0.05em; margin-left: 6px;">0.0 dB</span></div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1040,"height":620}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { format: 0, bypass: false, stop: false, sync: false, noise: true, preset: 0 };
+  }
+  renderVals() {
+    const formats = [
+      { name: 'Studio Reel', desc: '15 ips two-track: steady and warm, with a soft head bump', k: [0.04, 0.02, 'Slow', 3, 'New', 0, 100], f: [0.15, 0.10, 0.2, 0.35, 0.05, 0.5, 1.0] },
+      { name: 'Home Reel', desc: '7.5 ips: a little looser, darker highs and a touch of hiss', k: [0.08, 0.05, 'Slow', 4, 'Light', 0, 100], f: [0.25, 0.2, 0.25, 0.42, 0.25, 0.5, 1.0] },
+      { name: 'Cassette', desc: 'Compact cassette: gentle wow, audible flutter, a rolled-off top', k: [0.15, 0.10, 'Medium', 5, 'Light', -10, 100], f: [0.38, 0.32, 0.45, 0.5, 0.3, 0.45, 1.0] },
+      { name: 'Worn Cassette', desc: 'A stretched, well-loved tape: deep wow, dropouts and grit', k: [0.45, 0.25, 'Wander', 6, 'Heavy', -25, 100], f: [0.78, 0.55, 0.8, 0.58, 0.82, 0.38, 1.0] },
+      { name: 'VHS', desc: 'Linear-track VCR audio: woozy pitch and a soft, narrow top', k: [0.30, 0.12, 'Medium', 2, 'Medium', -30, 100], f: [0.62, 0.36, 0.5, 0.3, 0.55, 0.35, 1.0] },
+      { name: 'Dictaphone', desc: 'Micro-cassette voice recorder: fast warble, thin and lo-fi', k: [0.25, 0.40, 'Fast', 8, 'Medium', -40, 100], f: [0.55, 0.75, 0.7, 0.75, 0.6, 0.3, 1.0] }
+    ];
+    const presets = ['Golden Hour', 'Sunday Reel', 'Mixtape', 'Attic Find', 'Late Broadcast', 'Field Notes'];
+    const s = this.state;
+    const cur = formats[s.format];
+    const pct = (v) => v.toFixed(2) + '%';
+    const db = (v) => '+' + v + ' dB';
+    const tone = (v) => (v > 0 ? '+' + v : '' + v);
+    const labels = ['WOW', 'FLUTTER', 'DRIFT', 'DRIVE', 'AGE', 'TONE', 'MIX'];
+    const values = [pct(cur.k[0]), pct(cur.k[1]), cur.k[2], db(cur.k[3]), cur.k[4], tone(cur.k[5]), cur.k[6] + '%'];
+    const knobs = labels.map((label, i) => ({
+      label,
+      value: values[i],
+      dial: 'position: absolute; inset: 0; transform: rotate(' + (-135 + 270 * cur.f[i]).toFixed(1) + 'deg); transition: transform 0.6s ease;'
+    }));
+
+    // The contrail bends more as Wow rises.
+    const amp = 2 + cur.f[0] * 10;
+    const wave = (x0, y0, x1, y1, a, n) => {
+      let d = 'M' + x0 + ' ' + y0;
+      for (let i = 1; i <= 40; i++) {
+        const t = i / 40;
+        const x = x0 + (x1 - x0) * t;
+        const y = y0 + (y1 - y0) * t + Math.sin(t * Math.PI * n) * a * t;
+        d += ' L' + x.toFixed(1) + ' ' + y.toFixed(1);
+      }
+      return d;
+    };
+
+    const formatsOut = formats.map((f, i) => {
+      const on = i === s.format;
+      return {
+        name: f.name,
+        selected: on,
+        pick: () => this.setState({ format: i, preset: i }),
+        style: 'height: 44px; border-radius: 10px; font-size: 13px; letter-spacing: 0.04em; color: ' + (on ? '#1d1730' : '#f6ead8') +
+          '; border: 1px solid ' + (on ? '#f2c27b' : 'rgba(246,214,180,0.24)') + '; background: ' +
+          (on ? 'linear-gradient(180deg, #ffd99a, #f2b36e)' : 'rgba(18,16,40,0.6)') + '; box-shadow: ' +
+          (on ? '0 0 18px rgba(255,190,110,0.45)' : 'none') + ';'
+      };
+    });
+
+    const pill = (label, on, key) => ({
+      label, on,
+      toggle: () => this.setState({ [key]: !s[key] }),
+      style: 'height: 40px; padding: 0 18px; border-radius: 999px; font-size: 12px; letter-spacing: 0.2em; color: ' + (on ? '#1d1730' : '#f6ead8') +
+        '; border: 1px solid ' + (on ? '#f2c27b' : 'rgba(246,214,180,0.3)') + '; background: ' + (on ? '#f2c27b' : 'rgba(18,16,40,0.55)') + ';'
+    });
+
+    const stars = [[60, 18, 1.5, 0], [140, 52, 1, 1.2], [230, 14, 1.5, 2.6], [318, 70, 1, 0.8], [420, 30, 1, 3.1], [512, 12, 1.5, 1.9],
+      [610, 48, 1, 0.4], [700, 20, 1, 2.2], [770, 64, 1.5, 3.6], [960, 16, 1, 1.4], [1010, 52, 1, 2.9], [86, 96, 1, 4.1]]
+      .map(([x, y, r, d]) => ({ style: 'position: absolute; left: ' + x + 'px; top: ' + y + 'px; width: ' + (r * 2) + 'px; height: ' + (r * 2) +
+        'px; border-radius: 50%; background: #fff6ea; animation-delay: -' + d + 's;' }));
+
+    const ripples = [];
+    for (let i = 0; i < 14; i++) {
+      const y = 6 + i * 13 + i * i * 0.6;
+      const w = Math.max(18, 120 - i * 7);
+      const a = Math.max(0.06, 0.62 - i * 0.04);
+      const off = (i % 3 - 1) * 6;
+      ripples.push({ style: 'position: absolute; left: ' + (880 - w / 2 + off) + 'px; top: ' + y + 'px; width: ' + w + 'px; height: 3px; border-radius: 2px; background: rgba(255,206,140,' + a.toFixed(2) + ');' });
+    }
+
+    return {
+      formats: formatsOut,
+      formatLabel: s.bypass ? 'BYPASSED' : 'FORMAT',
+      formatName: cur.name,
+      formatDesc: cur.desc,
+      knobs,
+      pills: [pill('TAPE STOP', s.stop, 'stop'), pill('SYNC', s.sync, 'sync'), pill('NOISE', s.noise, 'noise')],
+      presetNumber: String(s.preset + 1).padStart(3, '0'),
+      presetName: presets[s.preset],
+      prevPreset: () => this.setState({ preset: (s.preset + 5) % 6, format: (s.preset + 5) % 6 }),
+      nextPreset: () => this.setState({ preset: (s.preset + 1) % 6, format: (s.preset + 1) % 6 }),
+      trailGlow: wave(180, 150, 1000, 30, amp, 5),
+      trailOld: wave(-20, 120, 720, 70, amp * 1.6, 3),
+      planeX: 1000, planeY: 30,
+      stars,
+      ripples,
+      bypassed: s.bypass,
+      sunLabel: s.bypass ? 'Turn Contrail on' : 'Bypass Contrail',
+      toggleBypass: () => this.setState({ bypass: !s.bypass }),
+      sunTop: s.bypass ? 214 : 190,
+      sunGlowTop: s.bypass ? 174 : 150,
+      skyOpacity: s.bypass ? 0.55 : 1,
+      glowOpacity: s.bypass ? 0.15 : 1,
+      controlsOpacity: s.bypass ? 0.45 : 1
+    };
+  }
+}
+</script>
+</body>
+</html>

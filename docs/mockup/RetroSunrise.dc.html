@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contrail panel, retro sunrise</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&amp;family=Jost:wght@300;400;500&amp;display=swap">
+<style>
+body{margin:0;background:#120b17}
+@keyframes cr-sway{0%{transform:translateX(0)}100%{transform:translateX(-30px)}}
+@keyframes cr-wow{0%,100%{transform:translateX(0) scaleX(1)}25%{transform:translateX(3px) scaleX(1.06)}50%{transform:translateX(-2px) scaleX(0.95)}75%{transform:translateX(2px) scaleX(1.03)}}
+@keyframes cr-plane{0%,100%{opacity:.6}50%{opacity:1}}
+.cr-sway{animation:cr-sway 24s ease-in-out infinite alternate}
+.cr-wow{animation:cr-wow 3.2s ease-in-out infinite;transform-origin:830px 0}
+.cr-plane{animation:cr-plane 2.4s ease-in-out infinite}
+@media (prefers-reduced-motion: reduce){.cr-sway,.cr-wow,.cr-plane{animation:none}}
+button{font:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #ffd28a;outline-offset:2px}
+</style>
+</helmet>
+<div style="position: relative; width: 1040px; height: 620px; overflow: hidden; border-radius: 14px; font-family: 'Jost', system-ui, sans-serif; color: #f7e9d2; background: #120b17;">
+
+  <!-- Banded 70s sky -->
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 1040px; height: 250px; background: linear-gradient(180deg, #22142f 0%, #22142f 30%, #3a1840 30%, #3a1840 50%, #5c1f46 50%, #5c1f46 66%, #87304a 66%, #87304a 78%, #b54a42 78%, #b54a42 88%, #e07a3c 88%, #e07a3c 100%); opacity: {{skyOpacity}};"></div>
+
+  <!-- Contrail across the top band -->
+  <svg aria-hidden="true" class="cr-sway" width="1100" height="160" viewBox="0 0 1100 160" style="position: absolute; left: 0; top: 20px; overflow: visible;">
+    <defs>
+      <linearGradient id="crTrail" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#fbe3c8" stop-opacity="0"></stop>
+        <stop offset="0.6" stop-color="#fbe3c8" stop-opacity="0.5"></stop>
+        <stop offset="1" stop-color="#fff3e2" stop-opacity="0.95"></stop>
+      </linearGradient>
+      <filter id="crSoft" x="-10%" y="-200%" width="120%" height="500%"><feGaussianBlur stdDeviation="2.4"></feGaussianBlur></filter>
+    </defs>
+    <path d="{{trail}}" fill="none" stroke="url(#crTrail)" stroke-width="6" stroke-linecap="round" filter="url(#crSoft)" opacity="0.55"></path>
+    <path d="{{trail}}" fill="none" stroke="url(#crTrail)" stroke-width="1.8" stroke-linecap="round"></path>
+    <circle class="cr-plane" cx="{{planeX}}" cy="{{planeY}}" r="2.6" fill="#fff6e8"></circle>
+  </svg>
+
+  <!-- Striped retro sun; click it to bypass -->
+  <button aria-label="{{sunLabel}}" aria-pressed="{{bypassed}}" onClick="{{toggleBypass}}" style="position: absolute; left: 720px; top: {{sunTop}}px; width: 220px; height: 220px; border-radius: 50%; border: 0; padding: 0; background: linear-gradient(180deg, #ffe48c 0%, #ffbb5c 35%, #ff8a45 60%, #f0603c 100%); -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 40%, transparent 40%, transparent 42.5%, #000 42.5%, #000 48%, transparent 48%, transparent 51.5%, #000 51.5%, #000 56%, transparent 56%, transparent 60.5%, #000 60.5%, #000 64%, transparent 64%, transparent 69%, #000 69%); mask-image: linear-gradient(180deg, #000 0%, #000 40%, transparent 40%, transparent 42.5%, #000 42.5%, #000 48%, transparent 48%, transparent 51.5%, #000 51.5%, #000 56%, transparent 56%, transparent 60.5%, #000 60.5%, #000 64%, transparent 64%, transparent 69%, #000 69%); transition: top 1.2s ease;"></button>
+
+  <!-- Ground, with the sun's stripes reflected and wobbling like wow -->
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 250px; width: 1040px; height: 370px; background: linear-gradient(180deg, #2b1426 0%, #1d0f1f 30%, #140b17 70%, #0f0812 100%);"></div>
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 250px; width: 1040px; height: 6px; background: linear-gradient(90deg, #e07a3c, #f2a54a 50%, #b54a42);"></div>
+  <div aria-hidden="true" class="cr-wow" style="position: absolute; left: 0; top: 262px; width: 1040px; height: 220px; opacity: {{glowOpacity}};">
+    <sc-for list="{{reflections}}" as="r" hint-placeholder-count="10">
+      <div style="{{r.style}}"></div>
+    </sc-for>
+  </div>
+
+  <!-- Film grain over the whole picture -->
+  <svg aria-hidden="true" width="1040" height="620" style="position: absolute; left: 0; top: 0; opacity: 0.16; mix-blend-mode: overlay; pointer-events: none;">
+    <filter id="crGrain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix></filter>
+    <rect width="1040" height="620" filter="url(#crGrain)"></rect>
+  </svg>
+
+  <!-- Header -->
+  <div style="position: absolute; left: 40px; top: 24px; display: flex; align-items: center; gap: 12px;">
+    <svg aria-hidden="true" width="28" height="28" viewBox="0 0 28 28"><path d="M5 19 A9 9 0 0 1 23 19" fill="#ffb85a"></path><rect x="5" y="14" width="18" height="1.4" fill="#22142f"></rect><rect x="5" y="16.6" width="18" height="1.4" fill="#22142f"></rect><line x1="2" y1="19.6" x2="26" y2="19.6" stroke="#f7e9d2" stroke-width="1.4" stroke-linecap="round"></line></svg>
+    <div style="font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 30px; font-weight: 500; letter-spacing: 0.06em; color: #f7e9d2;">Contrail</div>
+  </div>
+
+  <div style="position: absolute; left: 372px; top: 22px; width: 296px; height: 46px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(247,200,140,0.32); border-radius: 23px; background: rgba(26,12,28,0.6); padding: 0 6px;">
+    <button aria-label="Previous preset" onClick="{{prevPreset}}" style="width: 44px; height: 36px; border: 0; background: transparent; color: #ffbe6a; font-size: 20px;">‹</button>
+    <div style="font-size: 15px; color: #f7e9d2;"><span style="color: #d2b9b4; margin-right: 10px;">{{presetNumber}}</span>{{presetName}}</div>
+    <button aria-label="Next preset" onClick="{{nextPreset}}" style="width: 44px; height: 36px; border: 0; background: transparent; color: #ffbe6a; font-size: 20px;">›</button>
+  </div>
+
+  <div style="position: absolute; right: 40px; top: 24px; display: flex; gap: 8px;">
+    <button style="height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid rgba(247,200,140,0.34); background: rgba(26,12,28,0.6); color: #f7e9d2; font-size: 12px; letter-spacing: 0.18em;"><span style="color: #ffbe6a;">A</span> / B</button>
+    <button style="height: 40px; padding: 0 16px; border-radius: 20px; border: 1px solid rgba(247,200,140,0.34); background: rgba(26,12,28,0.6); color: #f7e9d2; font-size: 12px; letter-spacing: 0.18em;">SAVE</button>
+  </div>
+
+  <!-- Format title -->
+  <div style="position: absolute; left: 40px; top: 112px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="font-size: 12px; letter-spacing: 0.3em; color: #ecd6cc;">{{formatLabel}}</div>
+    <div style="font-family: 'Fraunces', Georgia, serif; font-size: 50px; font-weight: 600; line-height: 1.05; color: #fbefdc;">{{formatName}}</div>
+    <div style="font-size: 15px; font-weight: 400; color: #fbefdc;">{{formatDesc}}</div>
+  </div>
+
+  <!-- Format buttons -->
+  <div style="position: absolute; left: 40px; top: 274px; width: 960px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px;">
+    <sc-for list="{{formats}}" as="f" hint-placeholder-count="6">
+      <button aria-pressed="{{f.selected}}" onClick="{{f.pick}}" style="{{f.style}}">{{f.name}}</button>
+    </sc-for>
+  </div>
+
+  <!-- Bakelite-style knobs -->
+  <div style="position: absolute; left: 40px; top: 344px; width: 960px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; opacity: {{controlsOpacity}};">
+    <sc-for list="{{knobs}}" as="k" hint-placeholder-count="7">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <div style="position: relative; width: 82px; height: 82px; border-radius: 50%; background: radial-gradient(circle at 40% 32%, #fbf0dc 0%, #ead6b3 50%, #c9ab80 100%); box-shadow: 0 10px 22px rgba(0,0,0,0.55), inset 0 -3px 6px rgba(120,80,40,0.35); border: 3px solid #5a3426;">
+          <div style="{{k.dial}}">
+            <div style="position: absolute; left: 36px; top: 5px; width: 4px; height: 22px; border-radius: 2px; background: #5a2a1e;"></div>
+          </div>
+        </div>
+        <div style="font-size: 12px; letter-spacing: 0.2em; color: #e3cdc4;">{{k.label}}</div>
+        <div style="font-size: 15px; color: #f7e9d2; margin-top: -4px;">{{k.value}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- Bottom row -->
+  <div style="position: absolute; left: 40px; top: 556px; display: flex; gap: 10px; opacity: {{controlsOpacity}};">
+    <sc-for list="{{pills}}" as="p" hint-placeholder-count="3">
+      <button aria-pressed="{{p.on}}" onClick="{{p.toggle}}" style="{{p.style}}">{{p.label}}</button>
+    </sc-for>
+  </div>
+  <div style="position: absolute; right: 40px; top: 566px; display: flex; gap: 28px; font-size: 12px; letter-spacing: 0.2em; color: #e3cdc4; opacity: {{controlsOpacity}};">
+    <div>RATE <span style="color: #f7e9d2; letter-spacing: 0.05em; margin-left: 6px;">Free</span></div>
+    <div>STEREO <span style="color: #f7e9d2; letter-spacing: 0.05em; margin-left: 6px;">Wide</span></div>
+    <div>OUTPUT <span style="color: #f7e9d2; letter-spacing: 0.05em; margin-left: 6px;">0.0 dB</span></div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1040,"height":620}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { format: 0, bypass: false, stop: false, sync: false, noise: true, preset: 0 };
+  }
+  renderVals() {
+    const formats = [
+      { name: 'Studio Reel', desc: '15 ips two-track: steady and warm, with a soft head bump', k: [0.04, 0.02, 'Slow', 3, 'New', 0, 100], f: [0.15, 0.10, 0.2, 0.35, 0.05, 0.5, 1.0] },
+      { name: 'Home Reel', desc: '7.5 ips: a little looser, darker highs and a touch of hiss', k: [0.08, 0.05, 'Slow', 4, 'Light', 0, 100], f: [0.25, 0.2, 0.25, 0.42, 0.25, 0.5, 1.0] },
+      { name: 'Cassette', desc: 'Compact cassette: gentle wow, audible flutter, a rolled-off top', k: [0.15, 0.10, 'Medium', 5, 'Light', -10, 100], f: [0.38, 0.32, 0.45, 0.5, 0.3, 0.45, 1.0] },
+      { name: 'Worn Cassette', desc: 'A stretched, well-loved tape: deep wow, dropouts and grit', k: [0.45, 0.25, 'Wander', 6, 'Heavy', -25, 100], f: [0.78, 0.55, 0.8, 0.58, 0.82, 0.38, 1.0] },
+      { name: 'VHS', desc: 'Linear-track VCR audio: woozy pitch and a soft, narrow top', k: [0.30, 0.12, 'Medium', 2, 'Medium', -30, 100], f: [0.62, 0.36, 0.5, 0.3, 0.55, 0.35, 1.0] },
+      { name: 'Dictaphone', desc: 'Micro-cassette voice recorder: fast warble, thin and lo-fi', k: [0.25, 0.40, 'Fast', 8, 'Medium', -40, 100], f: [0.55, 0.75, 0.7, 0.75, 0.6, 0.3, 1.0] }
+    ];
+    const presets = ['Golden Hour', 'Sunday Reel', 'Mixtape', 'Attic Find', 'Late Broadcast', 'Field Notes'];
+    const s = this.state;
+    const cur = formats[s.format];
+    const pct = (v) => v.toFixed(2) + '%';
+    const tone = (v) => (v > 0 ? '+' + v : '' + v);
+    const labels = ['WOW', 'FLUTTER', 'DRIFT', 'DRIVE', 'AGE', 'TONE', 'MIX'];
+    const values = [pct(cur.k[0]), pct(cur.k[1]), cur.k[2], '+' + cur.k[3] + ' dB', cur.k[4], tone(cur.k[5]), cur.k[6] + '%'];
+    const knobs = labels.map((label, i) => ({
+      label,
+      value: values[i],
+      dial: 'position: absolute; inset: 0; transform: rotate(' + (-135 + 270 * cur.f[i]).toFixed(1) + 'deg); transition: transform 0.6s ease;'
+    }));
+
+    const amp = 2 + cur.f[0] * 10;
+    let trail = 'M-20 120';
+    for (let i = 1; i <= 40; i++) {
+      const t = i / 40;
+      const x = -20 + 1040 * t;
+      const y = 120 - 96 * t + Math.sin(t * Math.PI * 4) * amp * t;
+      trail += ' L' + x.toFixed(1) + ' ' + y.toFixed(1);
+    }
+
+    const reflections = [];
+    for (let i = 0; i < 10; i++) {
+      const w = Math.max(30, 210 - i * 18);
+      const a = Math.max(0.08, 0.7 - i * 0.065);
+      const colour = i < 3 ? '255,190,100' : i < 6 ? '255,140,70' : '230,96,60';
+      reflections.push({ style: 'position: absolute; left: ' + (830 - w / 2) + 'px; top: ' + (i * 14 + i * i * 0.8) + 'px; width: ' + w +
+        'px; height: ' + (5 - Math.min(3, i * 0.4)).toFixed(1) + 'px; border-radius: 3px; background: rgba(' + colour + ',' + a.toFixed(2) + ');' });
+    }
+
+    const formatsOut = formats.map((f, i) => {
+      const on = i === s.format;
+      return {
+        name: f.name,
+        selected: on,
+        pick: () => this.setState({ format: i, preset: i }),
+        style: 'height: 44px; border-radius: 22px; font-size: 13px; letter-spacing: 0.04em; color: ' + (on ? '#2a1218' : '#f7e9d2') +
+          '; border: 1px solid ' + (on ? '#ffb85a' : 'rgba(247,200,140,0.28)') + '; background: ' +
+          (on ? 'linear-gradient(180deg, #ffcf7a, #f08a40)' : 'rgba(40,18,36,0.7)') + ';'
+      };
+    });
+
+    const pill = (label, on, key) => ({
+      label, on,
+      toggle: () => this.setState({ [key]: !s[key] }),
+      style: 'height: 40px; padding: 0 18px; border-radius: 999px; font-size: 12px; letter-spacing: 0.2em; color: ' + (on ? '#2a1218' : '#f7e9d2') +
+        '; border: 1px solid ' + (on ? '#ffb85a' : 'rgba(247,200,140,0.32)') + '; background: ' + (on ? '#ffb85a' : 'rgba(40,18,36,0.7)') + ';'
+    });
+
+    return {
+      formats: formatsOut,
+      formatLabel: s.bypass ? 'BYPASSED' : 'FORMAT',
+      formatName: cur.name,
+      formatDesc: cur.desc,
+      knobs,
+      pills: [pill('TAPE STOP', s.stop, 'stop'), pill('SYNC', s.sync, 'sync'), pill('NOISE', s.noise, 'noise')],
+      presetNumber: String(s.preset + 1).padStart(3, '0'),
+      presetName: presets[s.preset],
+      prevPreset: () => this.setState({ preset: (s.preset + 5) % 6, format: (s.preset + 5) % 6 }),
+      nextPreset: () => this.setState({ preset: (s.preset + 1) % 6, format: (s.preset + 1) % 6 }),
+      trail,
+      planeX: 1020, planeY: 24,
+      reflections,
+      bypassed: s.bypass,
+      sunLabel: s.bypass ? 'Turn Contrail on' : 'Bypass Contrail',
+      toggleBypass: () => this.setState({ bypass: !s.bypass }),
+      sunTop: s.bypass ? 206 : 100,
+      skyOpacity: s.bypass ? 0.55 : 1,
+      glowOpacity: s.bypass ? 0.15 : 1,
+      controlsOpacity: s.bypass ? 0.45 : 1
+    };
+  }
+}
+</script>
+</body>
+</html>

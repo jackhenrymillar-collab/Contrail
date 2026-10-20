@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contrail panel, above the clouds</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&amp;family=Jost:wght@300;400;500&amp;display=swap">
+<style>
+body{margin:0;background:#141428}
+@keyframes cb-roll{0%{transform:translateX(0)}100%{transform:translateX(-60px)}}
+@keyframes cb-roll2{0%{transform:translateX(0)}100%{transform:translateX(40px)}}
+@keyframes cb-glow{0%,100%{opacity:.85}50%{opacity:1}}
+@keyframes cb-plane{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes cb-tw{0%,100%{opacity:.15}50%{opacity:.75}}
+@keyframes cb-track{0%{transform:translateY(-30px)}100%{transform:translateY(640px)}}
+.cb-roll{animation:cb-roll 40s ease-in-out infinite alternate}
+.cb-roll2{animation:cb-roll2 52s ease-in-out infinite alternate}
+.cb-glow{animation:cb-glow 7s ease-in-out infinite}
+.cb-plane{animation:cb-plane 2.4s ease-in-out infinite}
+.cb-tw{animation:cb-tw 5s ease-in-out infinite}
+.cb-track{animation:cb-track 7s linear infinite}
+@media (prefers-reduced-motion: reduce){.cb-roll,.cb-roll2,.cb-glow,.cb-plane,.cb-tw,.cb-track{animation:none}}
+button{font:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid #f2c27b;outline-offset:2px}
+</style>
+</helmet>
+<div style="position: relative; width: 1040px; height: 620px; overflow: hidden; border-radius: 14px; font-family: 'Jost', system-ui, sans-serif; color: #f6ead8; background: #141428;">
+
+  <!-- Each format's sky, contrails and far light. They crossfade when the format changes. -->
+  <sc-for list="{{themes}}" as="t" hint-placeholder-count="6">
+    <div aria-hidden="true" style="{{t.groupStyle}}">
+      <div style="{{t.skyStyle}}"></div>
+      <div class="cb-glow" style="{{t.glowStyle}}"></div>
+      <sc-for list="{{t.stars}}" as="st" hint-placeholder-count="0">
+        <div class="cb-tw" style="{{st.style}}"></div>
+      </sc-for>
+      <svg width="1040" height="260" viewBox="0 0 1040 260" style="position: absolute; left: 0; top: 0;">
+        <defs>
+          <linearGradient id="cbTrail{{t.i}}" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#ffe9dc" stop-opacity="0"></stop>
+            <stop offset="0.6" stop-color="#ffe9dc" stop-opacity="0.5"></stop>
+            <stop offset="1" stop-color="#fff6ee" stop-opacity="0.95"></stop>
+          </linearGradient>
+          <filter id="cbSoft{{t.i}}" x="-10%" y="-300%" width="120%" height="700%"><feGaussianBlur stdDeviation="{{t.blur}}"></feGaussianBlur></filter>
+        </defs>
+        <g opacity="{{t.trail}}">
+          <path d="{{t.trailOld}}" fill="none" stroke="#f5c6c6" stroke-opacity="0.22" stroke-width="{{t.oldWidth}}" stroke-linecap="round" filter="url(#cbSoft{{t.i}})"></path>
+          <path d="{{t.trailA}}" fill="none" stroke="url(#cbTrail{{t.i}})" stroke-width="5" stroke-linecap="round" filter="url(#cbSoft{{t.i}})" opacity="0.55"></path>
+          <path d="{{t.trailA}}" fill="none" stroke="url(#cbTrail{{t.i}})" stroke-width="1.4" stroke-linecap="round"></path>
+          <path d="{{t.trailB}}" fill="none" stroke="url(#cbTrail{{t.i}})" stroke-width="1.4" stroke-linecap="round"></path>
+          <circle class="cb-plane" cx="1012" cy="64" r="2.6" fill="#fffaf2"></circle>
+        </g>
+      </svg>
+    </div>
+  </sc-for>
+
+  <!-- The sun climbs a little higher with each format; click it to bypass -->
+  <div aria-hidden="true" style="position: absolute; left: 630px; top: {{flareTop}}px; width: 420px; height: 20px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,240,200,0.8), rgba(255,200,140,0) 100%); opacity: {{sunOpacity}}; transition: top 1.6s ease, opacity 1.6s ease;"></div>
+  <div aria-hidden="true" style="position: absolute; left: 770px; top: {{sunGlowTop}}px; width: 200px; height: 200px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,226,160,0.9), rgba(255,180,100,0.32) 55%, rgba(255,150,80,0) 100%); opacity: {{sunOpacity}}; transition: top 1.6s ease, opacity 1.6s ease;"></div>
+  <button aria-label="{{sunLabel}}" aria-pressed="{{bypassed}}" onClick="{{toggleBypass}}" style="position: absolute; left: 820px; top: {{sunTop}}px; width: 100px; height: 100px; border-radius: 50%; border: 0; padding: 0; background: radial-gradient(circle at 50% 45%, #fffbe8 0%, #ffe7a8 45%, #ffbf73 80%, #f79a5c 100%); box-shadow: 0 0 46px rgba(255,200,120,0.75); opacity: {{sunOpacity}}; transition: top 1.6s ease, opacity 1.6s ease;"></button>
+
+  <!-- Each format's cloud sea -->
+  <sc-for list="{{themes}}" as="t" hint-placeholder-count="6">
+    <div aria-hidden="true" style="{{t.groupStyle}}">
+      <div class="cb-roll2" style="position: absolute; left: -60px; top: 238px; width: 1200px; height: 120px;">
+        <sc-for list="{{t.far}}" as="c" hint-placeholder-count="9">
+          <div style="{{c.style}}"></div>
+        </sc-for>
+      </div>
+      <div style="position: absolute; left: 0; top: 262px; width: 1040px; height: 358px; background: {{t.seaFade}};"></div>
+      <div class="cb-roll" style="position: absolute; left: -40px; top: 268px; width: 1200px; height: 200px;">
+        <sc-for list="{{t.near}}" as="c" hint-placeholder-count="8">
+          <div style="{{c.style}}"></div>
+        </sc-for>
+      </div>
+      <sc-for list="{{t.extras}}" as="e" hint-placeholder-count="0">
+        <div class="{{e.cls}}" style="{{e.style}}"></div>
+      </sc-for>
+    </div>
+  </sc-for>
+  <div aria-hidden="true" style="position: absolute; left: 0; top: 300px; width: 1040px; height: 320px; background: linear-gradient(180deg, rgba(20,18,42,0) 0%, rgba(20,18,42,0.55) 30%, rgba(16,15,34,0.85) 100%);"></div>
+
+  <!-- Film grain, strongest on the worn formats -->
+  <svg aria-hidden="true" width="1040" height="620" style="position: absolute; left: 0; top: 0; opacity: {{grain}}; mix-blend-mode: overlay; pointer-events: none; transition: opacity 1.6s ease;">
+    <filter id="cbGrain"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix></filter>
+    <rect width="1040" height="620" filter="url(#cbGrain)"></rect>
+  </svg>
+
+  <!-- Header -->
+  <div style="position: absolute; left: 40px; top: 26px; display: flex; align-items: center; gap: 12px;">
+    <svg aria-hidden="true" width="26" height="26" viewBox="0 0 26 26"><path d="M5 17 A8 8 0 0 1 21 17" fill="#f6c27e"></path><line x1="2" y1="17.5" x2="24" y2="17.5" stroke="#f6ead8" stroke-width="1.4" stroke-linecap="round"></line><path d="M3 9 C9 6 15 11 23 6" fill="none" stroke="#f6ead8" stroke-width="1.2" stroke-linecap="round" opacity="0.8"></path></svg>
+    <div style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 30px; font-weight: 500; letter-spacing: 0.32em; color: #f6ead8;">CONTRAIL</div>
+  </div>
+
+  <div style="position: absolute; left: 372px; top: 22px; width: 296px; height: 46px; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; border: 1px solid rgba(246,214,180,0.28); border-radius: 12px; background: rgba(18,18,44,0.55); padding: 0 6px;">
+    <button aria-label="Previous preset" onClick="{{prevPreset}}" style="width: 44px; height: 36px; border: 0; background: transparent; color: #f2c27b; font-size: 20px;">‹</button>
+    <div style="font-size: 15px; color: #f6ead8;"><span style="color: #c9bfd6; margin-right: 10px;">{{presetNumber}}</span>{{presetName}}</div>
+    <button aria-label="Next preset" onClick="{{nextPreset}}" style="width: 44px; height: 36px; border: 0; background: transparent; color: #f2c27b; font-size: 20px;">›</button>
+  </div>
+
+  <div style="position: absolute; right: 40px; top: 24px; display: flex; gap: 8px;">
+    <button style="height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(246,214,180,0.3); background: rgba(18,18,44,0.55); color: #f6ead8; font-size: 12px; letter-spacing: 0.18em;"><span style="color: #f2c27b;">A</span> / B</button>
+    <button style="height: 40px; padding: 0 16px; border-radius: 10px; border: 1px solid rgba(246,214,180,0.3); background: rgba(18,18,44,0.55); color: #f6ead8; font-size: 12px; letter-spacing: 0.18em;">SAVE</button>
+  </div>
+
+  <!-- Format title -->
+  <div style="position: absolute; left: 40px; top: 112px; display: flex; flex-direction: column; gap: 4px;">
+    <div style="font-size: 12px; letter-spacing: 0.3em; color: #e6dcee;">{{formatLabel}}</div>
+    <div style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 52px; font-weight: 500; line-height: 1.05; color: #fbf3e8;">{{formatName}}</div>
+    <div style="font-size: 15px; font-weight: 300; color: #f6ead8;">{{formatDesc}}</div>
+  </div>
+
+  <!-- Format buttons -->
+  <div style="position: absolute; left: 40px; top: 262px; width: 960px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px;">
+    <sc-for list="{{formats}}" as="f" hint-placeholder-count="6">
+      <button aria-pressed="{{f.selected}}" onClick="{{f.pick}}" style="{{f.style}}">{{f.name}}</button>
+    </sc-for>
+  </div>
+
+  <!-- Knobs -->
+  <div style="position: absolute; left: 40px; top: 334px; width: 960px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; opacity: {{controlsOpacity}};">
+    <sc-for list="{{knobs}}" as="k" hint-placeholder-count="7">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <div style="position: relative; width: 86px; height: 86px; border-radius: 50%; background: radial-gradient(circle at 38% 30%, #5a5690 0%, #2f2d5c 55%, #1b1a38 100%); box-shadow: 0 10px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,230,200,0.18); border: 1px solid rgba(242,194,123,0.22);">
+          <div style="{{k.dial}}">
+            <div style="position: absolute; left: 39px; top: 7px; width: 8px; height: 8px; border-radius: 50%; background: #ffd99a; box-shadow: 0 0 8px rgba(255,200,120,0.9);"></div>
+          </div>
+        </div>
+        <div style="font-size: 12px; letter-spacing: 0.2em; color: #ddd4e8;">{{k.label}}</div>
+        <div style="font-size: 15px; color: #f6ead8; margin-top: -4px;">{{k.value}}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- Bottom row -->
+  <div style="position: absolute; left: 40px; top: 552px; display: flex; gap: 10px; opacity: {{controlsOpacity}};">
+    <sc-for list="{{pills}}" as="p" hint-placeholder-count="3">
+      <button aria-pressed="{{p.on}}" onClick="{{p.toggle}}" style="{{p.style}}">{{p.label}}</button>
+    </sc-for>
+  </div>
+  <div style="position: absolute; right: 40px; top: 562px; display: flex; gap: 28px; font-size: 12px; letter-spacing: 0.2em; color: #ddd4e8; opacity: {{controlsOpacity}};">
+    <div>RATE <span style="color: #f6ead8; letter-spacing: 0.05em; margin-left: 6px;">Free</span></div>
+    <div>STEREO <span style="color: #f6ead8; letter-spacing: 0.05em; margin-left: 6px;">Wide</span></div>
+    <div>OUTPUT <span style="color: #f6ead8; letter-spacing: 0.05em; margin-left: 6px;">0.0 dB</span></div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1040,"height":620}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { format: 0, bypass: false, stop: false, sync: false, noise: true, preset: 0 };
+  }
+  renderVals() {
+    const formats = [
+      { name: 'Studio Reel', look: 'First light', desc: '15 ips two-track: steady and warm, with a soft head bump', k: [0.04, 0.02, 'Slow', 3, 'New', 0, 100], f: [0.15, 0.10, 0.2, 0.35, 0.05, 0.5, 1.0] },
+      { name: 'Home Reel', look: 'Golden hour', desc: '7.5 ips: a little looser, darker highs and a touch of hiss', k: [0.08, 0.05, 'Slow', 4, 'Light', 0, 100], f: [0.25, 0.2, 0.25, 0.42, 0.25, 0.5, 1.0] },
+      { name: 'Cassette', look: 'Pastel morning', desc: 'Compact cassette: gentle wow, audible flutter, a rolled-off top', k: [0.15, 0.10, 'Medium', 5, 'Light', -10, 100], f: [0.38, 0.32, 0.45, 0.5, 0.3, 0.45, 1.0] },
+      { name: 'Worn Cassette', look: 'Faded photograph', desc: 'A stretched, well-loved tape: deep wow, dropouts and grit', k: [0.45, 0.25, 'Wander', 6, 'Heavy', -25, 100], f: [0.78, 0.55, 0.8, 0.58, 0.82, 0.38, 1.0] },
+      { name: 'VHS', look: 'Tracking lines', desc: 'Linear-track VCR audio: woozy pitch and a soft, narrow top', k: [0.30, 0.12, 'Medium', 2, 'Medium', -30, 100], f: [0.62, 0.36, 0.5, 0.3, 0.55, 0.35, 1.0] },
+      { name: 'Dictaphone', look: 'Overcast dawn', desc: 'Micro-cassette voice recorder: fast warble, thin and lo-fi', k: [0.25, 0.40, 'Fast', 8, 'Medium', -40, 100], f: [0.55, 0.75, 0.7, 0.75, 0.6, 0.3, 1.0] }
+    ];
+    const presets = ['Golden Hour', 'Sunday Reel', 'Mixtape', 'Attic Find', 'Late Broadcast', 'Field Notes'];
+    const s = this.state;
+    const cur = formats[s.format];
+
+    // ---- Skies: one per format (kept in step with AllFormats.dc.html) ----
+    const SKIES = [
+      { sun: 214, sunOpacity: 1, grain: 0.05, trail: 0.95, blur: 2.4, filter: 'none', stars: true,
+        sky: 'linear-gradient(180deg, #0f1640 0%, #23306a 40%, #4b4a86 66%, #c07a86 90%, #f2b08a 100%)',
+        glow: ['rgba(255,214,150,0.5)', 'rgba(250,160,120,0.22)'], far: ['#f6c7b0', '#a985a6'], near: ['#8f78a8', '#3e3a6e'], sea: '#2a2650' },
+      { sun: 196, sunOpacity: 1, grain: 0.06, trail: 0.9, blur: 2.6, filter: 'none',
+        sky: 'linear-gradient(180deg, #1a1838 0%, #3b2f5e 40%, #6e4566 64%, #d9805e 88%, #ffc46e 100%)',
+        glow: ['rgba(255,200,110,0.7)', 'rgba(240,140,80,0.32)'], far: ['#ffd99a', '#d98f72'], near: ['#a8789a', '#4a3560'], sea: '#2e2246' },
+      { sun: 176, sunOpacity: 1, grain: 0.06, trail: 0.85, blur: 2.8, filter: 'none',
+        sky: 'linear-gradient(180deg, #1e2552 0%, #3a4683 45%, #63639f 66%, #c99ac0 88%, #ffd3c4 100%)',
+        glow: ['rgba(255,226,226,0.55)', 'rgba(230,170,210,0.3)'], far: ['#ffe4ec', '#d6a8c8'], near: ['#b39bcc', '#5a4f8a'], sea: '#2c2a5a' },
+      { sun: 160, sunOpacity: 1, grain: 0.26, trail: 0.6, blur: 5, filter: 'sepia(0.5) saturate(0.7) contrast(0.92)', leak: true,
+        sky: 'linear-gradient(180deg, #221c34 0%, #43345a 40%, #74526a 64%, #d0896a 88%, #f6c48a 100%)',
+        glow: ['rgba(255,206,140,0.6)', 'rgba(230,150,100,0.3)'], far: ['#f6d2a8', '#c9967a'], near: ['#a08090', '#4a3a52'], sea: '#2e2436' },
+      { sun: 140, sunOpacity: 1, grain: 0.1, trail: 0.8, blur: 2.4, filter: 'none', scan: true, ghost: true,
+        sky: 'linear-gradient(180deg, #120f30 0%, #2c1f5a 40%, #4e3484 64%, #c45a9a 88%, #ff9a8a 100%)',
+        glow: ['rgba(255,150,170,0.55)', 'rgba(200,90,200,0.3)'], far: ['#ffc2cf', '#b87ab8'], near: ['#8a6ab8', '#3a2a6a'], sea: '#22184a' },
+      { sun: 118, sunOpacity: 0.55, grain: 0.12, trail: 0.35, blur: 3, filter: 'none', veil: true, drizzle: true,
+        sky: 'linear-gradient(180deg, #171b2a 0%, #2c3248 40%, #4c5268 64%, #9a9aa6 88%, #d8c8b8 100%)',
+        glow: ['rgba(240,226,200,0.4)', 'rgba(200,190,190,0.18)'], far: ['#d9d3d2', '#8f8b99'], near: ['#6e6c84', '#2e2d42'], sea: '#262838' }
+    ];
+    const amp = 2 + cur.f[0] * 10;
+    const wave = (x0, y0, x1, y1, a, n) => {
+      let d = 'M' + x0 + ' ' + y0;
+      for (let i = 1; i <= 40; i++) {
+        const t = i / 40;
+        const x = x0 + (x1 - x0) * t;
+        const y = y0 + (y1 - y0) * t + Math.sin(t * Math.PI * n) * a * (1 - t);
+        d += ' L' + x.toFixed(1) + ' ' + y.toFixed(1);
+      }
+      return d;
+    };
+    const blob = (x, y, w, h, top, mid, a) => ({ style: 'position: absolute; left: ' + x + 'px; top: ' + y + 'px; width: ' + w + 'px; height: ' + h +
+      'px; border-radius: 50%; background: radial-gradient(ellipse at 50% 30%, ' + top + ' 0%, ' + mid + ' 60%, rgba(40,36,70,0) 100%); opacity: ' + a + ';' });
+    const box = (l, t, w, h, rest) => 'position: absolute; left: ' + l + 'px; top: ' + t + 'px; width: ' + w + 'px; height: ' + h + 'px; ' + rest;
+    const starList = [[60, 18, 1.5, 0], [140, 52, 1, 1.2], [230, 14, 1.5, 2.6], [318, 70, 1, 0.8], [420, 30, 1, 3.1], [512, 12, 1.5, 1.9],
+      [610, 48, 1, 0.4], [700, 20, 1, 2.2], [960, 16, 1, 1.4], [86, 96, 1, 4.1]];
+    const sky = (k, i, sunTop, active) => {
+      const far = [
+        blob(0, 30, 260, 70, k.far[0], k.far[1], 0.9), blob(180, 18, 300, 90, k.far[0], k.far[1], 0.95), blob(420, 26, 280, 80, k.far[0], k.far[1], 0.95),
+        blob(620, 8, 340, 100, k.far[0], k.far[1], 1), blob(880, 20, 300, 90, k.far[0], k.far[1], 1), blob(1060, 34, 200, 70, k.far[0], k.far[1], 0.9),
+        blob(60, 56, 380, 70, k.near[0], k.near[1], 0.8), blob(400, 60, 420, 70, k.near[0], k.near[1], 0.8), blob(800, 54, 400, 70, k.near[0], k.near[1], 0.85)
+      ];
+      const near = [
+        blob(-40, 10, 380, 120, k.near[0], k.near[1], 0.85), blob(260, 0, 420, 130, k.near[0], k.near[1], 0.85), blob(620, 6, 420, 120, k.near[0], k.near[1], 0.85),
+        blob(940, 12, 300, 110, k.near[0], k.near[1], 0.85), blob(80, 70, 480, 120, k.near[1], k.sea, 0.9), blob(520, 64, 520, 130, k.near[1], k.sea, 0.9),
+        blob(-60, 120, 600, 110, k.sea, '#16142e', 0.9), blob(480, 120, 700, 110, k.sea, '#16142e', 0.9)
+      ];
+      const extras = [];
+      if (k.leak) extras.push({ cls: '', style: box(820, -60, 300, 760, 'background: radial-gradient(closest-side, rgba(255,110,60,0.4), rgba(255,110,60,0) 100%); mix-blend-mode: screen;') });
+      if (k.scan) {
+        extras.push({ cls: '', style: box(0, 0, 1040, 620, 'background: repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 3px);') });
+        extras.push({ cls: 'cb-track', style: box(0, 0, 1040, 16, 'background: linear-gradient(180deg, rgba(255,255,255,0), rgba(255,240,250,0.12), rgba(255,255,255,0));') });
+      }
+      if (k.ghost) {
+        extras.push({ cls: '', style: box(815, sunTop - 2, 100, 100, 'border-radius: 50%; background: rgba(255,60,90,0.28); mix-blend-mode: screen;') });
+        extras.push({ cls: '', style: box(826, sunTop + 2, 100, 100, 'border-radius: 50%; background: rgba(60,220,255,0.22); mix-blend-mode: screen;') });
+      }
+      if (k.veil) {
+        extras.push({ cls: '', style: box(640, sunTop + 10, 460, 90, 'border-radius: 50%; background: radial-gradient(closest-side, rgba(190,192,204,0.6), rgba(190,192,204,0) 100%); filter: blur(6px);') });
+        extras.push({ cls: '', style: box(0, 0, 1040, 620, 'background: repeating-linear-gradient(105deg, rgba(220,226,238,0.07) 0px, rgba(220,226,238,0.07) 1px, rgba(0,0,0,0) 1px, rgba(0,0,0,0) 11px);') });
+      }
+      return {
+        i,
+        groupStyle: 'position: absolute; left: 0; top: 0; width: 1040px; height: 620px; opacity: ' + (active ? 1 : 0) + '; transition: opacity 1.6s ease; filter: ' + k.filter + ';',
+        skyStyle: box(0, 0, 1040, 330, 'background: ' + k.sky + ';'),
+        glowStyle: box(380, -40, 1000, 560, 'background: radial-gradient(closest-side, ' + k.glow[0] + ', ' + k.glow[1] + ' 40%, rgba(220,120,140,0.06) 72%, rgba(220,120,140,0) 100%);'),
+        stars: k.stars ? starList.map(([x, y, r, d]) => ({ style: box(x, y, r * 2, r * 2, 'border-radius: 50%; background: #fff6ea; animation-delay: -' + d + 's;') })) : [],
+        trail: k.trail, blur: k.blur, oldWidth: 10 + k.blur * 2,
+        trailA: wave(1010, 62, 160, 210, amp, 4),
+        trailB: wave(1010, 68, 200, 232, amp, 4),
+        trailOld: wave(1060, 150, -40, 40, amp * 1.6, 3),
+        far, near, extras,
+        seaFade: 'linear-gradient(180deg, rgba(40,36,70,0) 0%, ' + k.sea + 'd9 18%, ' + k.sea + ' 45%, #191734 75%, #121127 100%)'
+      };
+    };
+    const sunTop = s.bypass ? 236 : SKIES[s.format].sun;
+    const themes = SKIES.map((k, i) => sky(k, i, sunTop, i === s.format));
+
+    // ---- Controls ----
+    const pct = (v) => v.toFixed(2) + '%';
+    const tone = (v) => (v > 0 ? '+' + v : '' + v);
+    const labels = ['WOW', 'FLUTTER', 'DRIFT', 'DRIVE', 'AGE', 'TONE', 'MIX'];
+    const values = [pct(cur.k[0]), pct(cur.k[1]), cur.k[2], '+' + cur.k[3] + ' dB', cur.k[4], tone(cur.k[5]), cur.k[6] + '%'];
+    const knobs = labels.map((label, i) => ({
+      label,
+      value: values[i],
+      dial: 'position: absolute; left: 0; top: 0; width: 86px; height: 86px; transform: rotate(' + (-135 + 270 * cur.f[i]).toFixed(1) + 'deg); transition: transform 0.6s ease;'
+    }));
+    const formatsOut = formats.map((f, i) => {
+      const on = i === s.format;
+      return {
+        name: f.name,
+        selected: on,
+        pick: () => this.setState({ format: i, preset: i }),
+        style: 'height: 44px; border-radius: 10px; font-size: 13px; letter-spacing: 0.04em; color: ' + (on ? '#1d1730' : '#f6ead8') +
+          '; border: 1px solid ' + (on ? '#f2c27b' : 'rgba(246,214,180,0.24)') + '; background: ' +
+          (on ? 'linear-gradient(180deg, #ffe0a6, #f2b36e)' : 'rgba(22,20,48,0.62)') + '; box-shadow: ' +
+          (on ? '0 0 18px rgba(255,190,110,0.45)' : 'none') + ';'
+      };
+    });
+    const pill = (label, on, key) => ({
+      label, on,
+      toggle: () => this.setState({ [key]: !s[key] }),
+      style: 'height: 40px; padding: 0 18px; border-radius: 999px; font-size: 12px; letter-spacing: 0.2em; color: ' + (on ? '#1d1730' : '#f6ead8') +
+        '; border: 1px solid ' + (on ? '#f2c27b' : 'rgba(246,214,180,0.3)') + '; background: ' + (on ? '#f2c27b' : 'rgba(22,20,48,0.6)') + ';'
+    });
+
+    return {
+      themes,
+      grain: SKIES[s.format].grain,
+      formats: formatsOut,
+      formatLabel: s.bypass ? 'BYPASSED' : 'FORMAT · ' + cur.look.toUpperCase(),
+      formatName: cur.name,
+      formatDesc: cur.desc,
+      knobs,
+      pills: [pill('TAPE STOP', s.stop, 'stop'), pill('SYNC', s.sync, 'sync'), pill('NOISE', s.noise, 'noise')],
+      presetNumber: String(s.preset + 1).padStart(3, '0'),
+      presetName: presets[s.preset],
+      prevPreset: () => this.setState({ preset: (s.preset + 5) % 6, format: (s.preset + 5) % 6 }),
+      nextPreset: () => this.setState({ preset: (s.preset + 1) % 6, format: (s.preset + 1) % 6 }),
+      bypassed: s.bypass,
+      sunLabel: s.bypass ? 'Turn Contrail on' : 'Bypass Contrail',
+      toggleBypass: () => this.setState({ bypass: !s.bypass }),
+      sunTop,
+      sunGlowTop: sunTop - 50,
+      flareTop: sunTop + 40,
+      sunOpacity: s.bypass ? 0.7 : SKIES[s.format].sunOpacity,
+      controlsOpacity: s.bypass ? 0.45 : 1
+    };
+  }
+}
+</script>
+</body>
+</html>
