@@ -182,6 +182,9 @@ TEST_CASE ("Ten seconds of random automation never blows up")
                 p.sync = rng.unit() < 0.5f;
                 p.syncRate = static_cast<int> (rng.unit() * dsp::kNumSyncRates);
                 p.wide = rng.unit() < 0.5f;
+                p.mono = rng.unit() < 0.2f;
+                p.crunch = rng.unit() < 0.5f ? 0.0f : rng.unit();
+                p.chorus = rng.unit() < 0.5f ? 0.0f : rng.unit();
                 p.noise = rng.unit() < 0.5f;
                 p.bypass = rng.unit() < 0.1f;
                 e.setParams (p);

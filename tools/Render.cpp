@@ -1,9 +1,10 @@
 // Renders audio previews: a short electric-piano clip through every format at its
-// factory settings, plus a Tape Stop and Start demo. Development only.
+// factory settings, plus demos of Tape Stop, Drive, Sampler Crunch, Vintage Chorus and
+// Mono. Development only.
 //
 //   contrail_render <out-dir>
 //
-// Writes dry.wav, one file per format, and tape-stop.wav (48 kHz, 16-bit stereo).
+// Writes WAV files (48 kHz, 16-bit stereo).
 
 #include "dsp/TapeEngine.h"
 
@@ -66,6 +67,66 @@ Stereo clip (double seconds)
                      0.25f + 0.5f * static_cast<float> (k) / static_cast<float> (chords[c].size()));
         addNote (s, t + bar * 0.5, bar * 0.45, melody[2 * c], 0.08f, 0.6f);
         addNote (s, t + bar * 0.75, bar * 0.6, melody[2 * c + 1], 0.08f, 0.6f);
+    }
+    return s;
+}
+
+// A simple drum loop (kick, snare, hats) at 92 bpm, to hear Sampler Crunch on.
+Stereo drums (double seconds)
+{
+    Stereo s;
+    s.l.assign (static_cast<std::size_t> (seconds * kRate), 0.0f);
+    s.r = s.l;
+    const double beat = 60.0 / 92.0;
+    std::uint32_t seed = 12345;
+    auto noise = [&seed] {
+        seed = seed * 1664525u + 1013904223u;
+        return static_cast<float> (seed >> 8) / 8388608.0f - 1.0f;
+    };
+    auto hit = [&] (double start, int kind) {
+        const auto s0 = static_cast<std::size_t> (start * kRate);
+        float hp = 0.0f, prev = 0.0f, phase = 0.0f;
+        for (std::size_t i = 0; i < static_cast<std::size_t> (0.5 * kRate) && s0 + i < s.l.size(); ++i)
+        {
+            const float t = static_cast<float> (i) / static_cast<float> (kRate);
+            float v = 0.0f, pan = 0.5f;
+            if (kind == 0) // kick: a falling sine with a click
+            {
+                const float f = 48.0f + 110.0f * std::exp (-t * 30.0f);
+                phase += 2.0f * std::numbers::pi_v<float> * f / static_cast<float> (kRate);
+                v = 0.7f * std::sin (phase) * std::exp (-t * 7.0f) + 0.15f * noise() * std::exp (-t * 400.0f);
+            }
+            else if (kind == 1) // snare: a tone and a burst of noise
+            {
+                phase += 2.0f * std::numbers::pi_v<float> * 190.0f / static_cast<float> (kRate);
+                v = 0.25f * std::sin (phase) * std::exp (-t * 25.0f) + 0.35f * noise() * std::exp (-t * 14.0f);
+                pan = 0.45f;
+            }
+            else // hat: high-passed noise, short
+            {
+                const float n = noise();
+                hp = 0.6f * (hp + n - prev);
+                prev = n;
+                v = 0.12f * hp * std::exp (-t * 60.0f);
+                pan = 0.65f;
+            }
+            const float gl = std::cos (pan * std::numbers::pi_v<float> * 0.5f), gr = std::sin (pan * std::numbers::pi_v<float> * 0.5f);
+            s.l[s0 + i] += gl * v;
+            s.r[s0 + i] += gr * v;
+        }
+    };
+    for (int b = 0; b * beat < seconds - 0.6; ++b)
+    {
+        const double t = 0.05 + b * beat;
+        const int inBar = b % 4;
+        if (inBar == 0 || inBar == 2)
+            hit (t, 0);
+        if (inBar == 1 || inBar == 3)
+            hit (t, 1);
+        if (inBar == 3 && (b / 4) % 2 == 1)
+            hit (t + beat * 0.5, 0);
+        hit (t, 2);
+        hit (t + beat * 0.5, 2);
     }
     return s;
 }
@@ -158,5 +219,41 @@ int main (int argc, char** argv)
     auto p = factory (static_cast<int> (dsp::FormatId::cassette));
     writeWav (dir + "/7-tape-stop-and-start.wav", process (dry, p, 4.0, 6.5));
     std::printf ("wrote tape stop demo\n");
+
+    // Drive pushed hard (+12 dB), hiss off so the saturation is all you hear.
+    const char* driveNames[] = { "drive-studio-reel", "drive-home-reel", "drive-cassette", "drive-vhs" };
+    const int driveFormats[] = { 0, 1, 2, 4 };
+    for (int i = 0; i < 4; ++i)
+    {
+        auto d = factory (driveFormats[i]);
+        d.noise = false;
+        d.driveDb = 12.0f;
+        writeWav (dir + "/8-" + driveNames[i] + "-plus12.wav", process (dry, d));
+    }
+    std::printf ("wrote drive demos\n");
+
+    // Sampler Crunch on drums, Studio Reel otherwise at its factory settings.
+    const auto beat = drums (10.5);
+    writeWav (dir + "/9-drums-dry.wav", beat);
+    for (const float c : { 0.4f, 0.75f })
+    {
+        auto d = factory (0);
+        d.noise = false;
+        d.crunch = c;
+        writeWav (dir + "/9-drums-crunch-" + std::to_string (static_cast<int> (c * 100.0f)) + ".wav", process (beat, d));
+    }
+    std::printf ("wrote crunch demos\n");
+
+    // Vintage Chorus at Lush and Deep, and the Mono switch, on Cassette.
+    for (const float c : { 0.35f, 0.7f })
+    {
+        auto d = factory (static_cast<int> (dsp::FormatId::cassette));
+        d.chorus = c;
+        writeWav (dir + "/10-chorus-" + std::to_string (static_cast<int> (c * 100.0f)) + ".wav", process (dry, d));
+    }
+    auto m = factory (static_cast<int> (dsp::FormatId::cassette));
+    m.mono = true;
+    writeWav (dir + "/11-cassette-mono.wav", process (dry, m));
+    std::printf ("wrote chorus and mono demos\n");
     return 0;
 }

@@ -1,4 +1,6 @@
 #include "Parameters.h"
+#include "dsp/Chorus.h"
+#include "dsp/Crunch.h"
 #include "dsp/Formats.h"
 
 namespace contrail
@@ -12,6 +14,11 @@ juce::StringArray formatNames()
 juce::StringArray syncRateNames()
 {
     return { "4 bars", "2 bars", "1 bar", "1/2", "1/4", "1/8", "1/16" };
+}
+
+juce::StringArray stereoNames()
+{
+    return { "Linked", "Wide", "Mono" };
 }
 
 namespace
@@ -69,12 +76,22 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
         Range { 0.0f, 100.0f, 0.1f }, d.mix,
         withText ([] (float x) { return String (roundToInt (x)) + "%"; }).withLabel ("%")));
 
+    // Sampler Crunch and Vintage Chorus: off at 0.
+    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { ParamID::crunch, v }, "Crunch",
+        Range { 0.0f, 100.0f, 0.1f }, 0.0f,
+        withText ([] (float x) { char text[32]; dsp::crunchText (x * 0.01f, text, sizeof (text)); return String (text); })
+            .withValueFromStringFunction ([] (const String& s) { return s.getFloatValue(); })));
+    layout.add (std::make_unique<AudioParameterFloat> (ParameterID { ParamID::chorus, v }, "Chorus",
+        Range { 0.0f, 100.0f, 0.1f }, 0.0f,
+        withText ([] (float x) { return String (dsp::chorusWord (x * 0.01f)); })
+            .withValueFromStringFunction ([] (const String& s) { return s.getFloatValue(); })));
+
     // Tape Stop is a switch: on stops the tape, off starts it again.
     layout.add (std::make_unique<AudioParameterBool> (ParameterID { ParamID::tapeStop, v }, "Tape Stop", false));
     layout.add (std::make_unique<AudioParameterBool> (ParameterID { ParamID::sync, v }, "Sync", false));
     layout.add (std::make_unique<AudioParameterBool> (ParameterID { ParamID::noise, v }, "Noise", true));
     layout.add (std::make_unique<AudioParameterChoice> (ParameterID { ParamID::rate, v }, "Sync Rate", syncRateNames(), 2));
-    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { ParamID::stereo, v }, "Stereo", StringArray { "Linked", "Wide" }, 1));
+    layout.add (std::make_unique<AudioParameterChoice> (ParameterID { ParamID::stereo, v }, "Stereo", stereoNames(), 1));
     layout.add (std::make_unique<AudioParameterFloat> (ParameterID { ParamID::output, v }, "Output",
         Range { -18.0f, 18.0f, 0.1f }, 0.0f, withText (signedDb).withLabel ("dB")));
     layout.add (std::make_unique<AudioParameterFloat> (ParameterID { ParamID::bias, v }, "Bias",

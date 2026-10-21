@@ -136,8 +136,8 @@ CloudPanel::CloudPanel (ContrailProcessor& p)
 
     // Knobs. Their values are shown with the parameters' own text (Drift and Age as words).
     const char* ids[numKnobs] = { ParamID::wow, ParamID::flutter, ParamID::drift, ParamID::drive,
-                                  ParamID::age, ParamID::tone, ParamID::mix };
-    const char* labels[numKnobs] = { "Wow", "Flutter", "Drift", "Drive", "Age", "Tone", "Mix" };
+                                  ParamID::age, ParamID::crunch, ParamID::chorus, ParamID::tone, ParamID::mix };
+    const char* labels[numKnobs] = { "Wow", "Flutter", "Drift", "Drive", "Age", "Crunch", "Chorus", "Tone", "Mix" };
     for (int i = 0; i < numKnobs; ++i)
     {
         auto& knob = knobs[static_cast<size_t> (i)];
@@ -149,7 +149,9 @@ CloudPanel::CloudPanel (ContrailProcessor& p)
     knobs[wow].setTooltip ("Slow pitch drift: the reels and capstan");
     knobs[flutter].setTooltip ("Fast pitch wobble: the motor and scrape");
     knobs[drift].setTooltip ("How quickly and unevenly the wow wanders");
-    knobs[drive].setTooltip ("How hard the tape is hit");
+    knobs[drive].setTooltip ("How hard the valve amp, transformer and tape are pushed");
+    knobs[crunch].setTooltip ("Old sampler grit: fewer bits and a lower sample rate");
+    knobs[chorus].setTooltip ("Vintage bucket-brigade chorus");
     knobs[age].setTooltip ("Worn tape: duller highs, more hiss and dropouts");
 
     // Bottom row
@@ -158,7 +160,6 @@ CloudPanel::CloudPanel (ContrailProcessor& p)
     buttonAttachments.push_back (std::make_unique<ButtonAttachment> (state, ParamID::tapeStop, tapeStop));
     buttonAttachments.push_back (std::make_unique<ButtonAttachment> (state, ParamID::sync, sync));
     buttonAttachments.push_back (std::make_unique<ButtonAttachment> (state, ParamID::noise, noise));
-    buttonAttachments.push_back (std::make_unique<ButtonAttachment> (state, ParamID::stereo, stereo));
     sliderAttachments.push_back (std::make_unique<SliderAttachment> (state, ParamID::output, output));
     output.setDoubleClickReturnValue (true, defaultValueOf (state, ParamID::output));
     tapeStop.setTooltip ("Stop the tape; click again to start it");
@@ -166,7 +167,8 @@ CloudPanel::CloudPanel (ContrailProcessor& p)
     noise.setTooltip ("Tape hiss");
     rate.setTooltip ("How often the wow repeats when Sync is on");
     rate.onClick = [this] { showRateMenu(); };
-    stereo.setTooltip ("Wide: each side wobbles a little differently");
+    stereo.setTooltip ("Wide: each side wobbles a little differently. Mono: one channel, like an old deck");
+    stereo.onClick = [this] { showStereoMenu(); };
     sync.onStateChange = [this] { updateRateText(); };
 
     addAndMakeVisible (*sunButton);
@@ -189,6 +191,7 @@ CloudPanel::CloudPanel (ContrailProcessor& p)
     bypassAttachment->sendInitialUpdate();
     updatePresetDisplay();
     updateRateText();
+    updateStereoText();
     setSize (kPanelWidth, kPanelHeight);
 }
 
@@ -224,6 +227,31 @@ void CloudPanel::updateRateText()
     const int index = juce::roundToInt (state.getRawParameterValue (ParamID::rate)->load());
     const auto names = syncRateNames();
     rate.setValueText (synced ? names[juce::jlimit (0, names.size() - 1, index)] : juce::String ("Free"));
+}
+
+void CloudPanel::updateStereoText()
+{
+    const auto names = stereoNames();
+    const int index = juce::roundToInt (processor.getState().getRawParameterValue (ParamID::stereo)->load());
+    stereo.setValueText (names[juce::jlimit (0, names.size() - 1, index)]);
+}
+
+void CloudPanel::showStereoMenu()
+{
+    const int current = juce::roundToInt (processor.getState().getRawParameterValue (ParamID::stereo)->load());
+    juce::PopupMenu menu;
+    const auto names = stereoNames();
+    for (int i = 0; i < names.size(); ++i)
+        menu.addItem (i + 1, names[i], true, i == current);
+
+    menu.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&stereo).withMinimumWidth (120),
+                        [safe = juce::Component::SafePointer<CloudPanel> (this)] (int result)
+                        {
+                            if (safe == nullptr || result == 0)
+                                return;
+                            setParameter (safe->processor.getState(), ParamID::stereo, static_cast<float> (result - 1));
+                            safe->updateStereoText();
+                        });
 }
 
 void CloudPanel::showRateMenu()
@@ -347,6 +375,7 @@ void CloudPanel::frame (double seconds, bool animate)
         lastPresetCheck = now;
         updatePresetDisplay();
         updateRateText();
+        updateStereoText();
 
         // The settings sit flush right like the mockup, so their spacing follows their text.
         const float widths = rate.preferredWidth() + stereo.preferredWidth() + output.preferredWidth();
@@ -379,8 +408,8 @@ void CloudPanel::resized()
         formatButtons[i]->setBounds (
             juce::Rectangle<float> (kLeft + static_cast<float> (i) * (colW + 8.0f), 262.0f, colW, 44.0f).toNearestInt());
 
-    // Knobs: seven across, 8 apart, dials starting at y = 334.
-    const float knobW = (contentW - 6.0f * 8.0f) / 7.0f;
+    // Knobs: nine across, 8 apart, dials starting at y = 334.
+    const float knobW = (contentW - static_cast<float> (numKnobs - 1) * 8.0f) / static_cast<float> (numKnobs);
     for (int i = 0; i < numKnobs; ++i)
         knobs[static_cast<size_t> (i)].setBounds (
             juce::Rectangle<float> (kLeft + static_cast<float> (i) * (knobW + 8.0f), 334.0f - Knob::topMargin,

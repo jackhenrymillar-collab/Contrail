@@ -16,6 +16,8 @@ namespace ParamID
     inline constexpr auto age      = "age";
     inline constexpr auto tone     = "tone";
     inline constexpr auto mix      = "mix";
+    inline constexpr auto crunch   = "crunch";
+    inline constexpr auto chorus   = "chorus";
     inline constexpr auto tapeStop = "tapestop";
     inline constexpr auto sync     = "sync";
     inline constexpr auto noise    = "noise";
@@ -31,6 +33,9 @@ juce::StringArray formatNames();
 
 // Note values for Sync, in the order of dsp::kSyncBeats.
 juce::StringArray syncRateNames();
+
+// Stereo choices. Linked and Wide keep their old indices so saved sessions still load.
+juce::StringArray stereoNames();
 
 juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 

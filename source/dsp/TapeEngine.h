@@ -1,6 +1,9 @@
 #pragma once
 
+#include "Analog.h"
 #include "Blocks.h"
+#include "Chorus.h"
+#include "Crunch.h"
 #include "Formats.h"
 #include "Hysteresis.h"
 #include "Oversampler.h"
@@ -32,6 +35,9 @@ struct EngineParams
     int syncRate = 2;              // index into kSyncBeats
     bool noise = true;             // tape hiss on or off
     bool wide = true;              // Stereo: Wide (true) or Linked (false)
+    bool mono = false;             // Stereo: Mono (overrides wide)
+    float crunch = 0.0f;           // Sampler Crunch, 0 to 1
+    float chorus = 0.0f;           // Vintage Chorus, 0 to 1
     bool bypass = false;
 };
 
@@ -45,9 +51,10 @@ struct HostTransport
 
 // The whole tape chain:
 //
-//   Drive -> record pre-emphasis -> hysteresis (oversampled) -> de-emphasis
+//   Crunch -> Drive -> input transformer -> valve record amp -> pre-emphasis -> tape hysteresis
+//   -> de-emphasis (all oversampled)
 //   -> transport (wow, flutter, drift, tape stop) -> hiss -> dropouts
-//   -> playback losses (Age) -> head bump and low cut -> Tone -> width -> Output
+//   -> playback losses (Age) -> head bump and low cut -> Tone -> Chorus -> width -> Output
 //   -> Mix with the dry signal -> bypass
 //
 // The dry signal is delayed to line up with the wet one, so the plugin's latency is a
@@ -59,7 +66,7 @@ public:
     static constexpr int kControlBlock = 32;
     static constexpr float kFormatMorphMs = 150.0f;
     static constexpr float kBypassFadeMs = 20.0f;
-    static constexpr float kTapeHeadroom = 0.7f;
+    static constexpr float kTapeHeadroom = 0.5f;
 
     TapeEngine();
 
@@ -82,7 +89,11 @@ public:
 private:
     void updateControls() noexcept;
 
-    double fs = 48000.0;
+    // Input transformer -> valve amp -> pre-emphasis -> tape -> de-emphasis, for one
+    // channel at the oversampled rate.
+    float recordChain (std::size_t channel, float x) noexcept;
+
+    double fs = 48000.0, internalFs = 192000.0;
     int latency = 1200;
     bool prepared = false;
 
@@ -95,9 +106,16 @@ private:
     int targetFormat = -1;
     float morph = 1.0f, morphStep = 0.01f;
 
+    // Before and after the tape.
+    Crunch crunch;
+    Chorus chorus;
+
     // Record side.
     std::array<Oversampler, 2> oversamplers;
     std::array<Hysteresis, 2> hysteresis;
+    std::array<Transformer, 2> transformers;
+    std::array<Triode, 2> triodes;
+    std::array<DcBlocker, 2> tubeDc;               // these four run at the oversampled rate
     std::array<Biquad, 2> preEmphasis, deEmphasis;
     std::array<DcBlocker, 2> recordDc;
     float appliedEmphasis = -100.0f;
@@ -116,7 +134,7 @@ private:
     float appliedToneLow = -100.0f, appliedToneHigh = -100.0f;
 
     // Smoothed values.
-    Smoother driveGain, wetGain, mixAmount, hissGain, width, asymmetry;
+    Smoother driveGain, wetGain, mixAmount, hissGain, width;
     Smoother wowSmooth, flutterSmooth, driftSmooth, ageSmooth, toneSmooth, biasSmooth;
     float bypassMix = 1.0f, bypassStep = 0.001f; // 1 = effect on
 

@@ -65,6 +65,7 @@ private:
         juce::Image image;
         juce::Rectangle<float> area;
         float resolution = 1.0f;
+        bool relative = false; // area is relative to an offset (the sun's layers), not the panel
 
         // A copy at screen resolution, made once the layer is at rest. Blitting it is
         // much cheaper than scaling up the small image every frame.
