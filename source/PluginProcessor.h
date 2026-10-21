@@ -90,6 +90,8 @@ private:
     std::atomic<float>* age = nullptr;
     std::atomic<float>* tone = nullptr;
     std::atomic<float>* mix = nullptr;
+    std::atomic<float>* crunch = nullptr;
+    std::atomic<float>* chorus = nullptr;
     std::atomic<float>* tapeStop = nullptr;
     std::atomic<float>* sync = nullptr;
     std::atomic<float>* noise = nullptr;

@@ -19,8 +19,13 @@ void TapeEngine::prepare (double sampleRate, int maxBlockSize)
     const int factor = Oversampler::factorFor (sampleRate);
     for (auto& o : oversamplers)
         o.prepare (factor);
+    const double internalRate = sampleRate * factor;
+    internalFs = internalRate;
     for (auto& h : hysteresis)
-        h.prepare (sampleRate * factor);
+        h.prepare (internalRate);
+    for (auto& t : transformers) t.prepare (internalRate);
+    for (auto& t : triodes) t.prepare (internalRate);
+    for (auto& d : tubeDc) d.prepare (internalRate);
 
     losses.prepare (sampleRate);
     latency = static_cast<int> (std::lround (kLatencyMs * 0.001 * sampleRate));
@@ -30,6 +35,8 @@ void TapeEngine::prepare (double sampleRate, int maxBlockSize)
 
     for (auto& d : recordDc) d.prepare (sampleRate);
     hiss.prepare (sampleRate);
+    crunch.prepare (sampleRate);
+    chorus.prepare (sampleRate);
     dropouts.prepare (sampleRate);
 
     for (auto& line : dryLine)
@@ -40,7 +47,6 @@ void TapeEngine::prepare (double sampleRate, int maxBlockSize)
     mixAmount.prepare (sampleRate, 20.0f);
     hissGain.prepare (sampleRate, 60.0f);
     width.prepare (sampleRate, 60.0f);
-    asymmetry.prepare (sampleRate, 60.0f);
     const double controlRate = sampleRate / kControlBlock;
     wowSmooth.prepare (controlRate, 60.0f);
     flutterSmooth.prepare (controlRate, 60.0f);
@@ -60,6 +66,9 @@ void TapeEngine::reset()
 {
     for (auto& o : oversamplers) o.reset();
     for (auto& h : hysteresis) h.reset();
+    for (auto& t : transformers) t.reset();
+    for (auto& t : triodes) t.reset();
+    for (auto& d : tubeDc) d.reset();
     for (auto& b : preEmphasis) b.reset();
     for (auto& b : deEmphasis) b.reset();
     for (auto& d : recordDc) d.reset();
@@ -72,6 +81,10 @@ void TapeEngine::reset()
     transport.reset();
     transport.setStopped (params.tapeStop);
     hiss.reset();
+    crunch.setAmount (params.crunch);
+    crunch.reset();
+    chorus.setAmount (params.chorus);
+    chorus.reset();
     dropouts.reset();
     losses.reset();
     for (auto& line : dryLine)
@@ -86,8 +99,7 @@ void TapeEngine::reset()
     wetGain.snapTo (dbToGain (params.outputDb + profile.trimDb));
     mixAmount.snapTo (params.mix);
     hissGain.snapTo (params.noise ? dbToGain (profile.hissDb + profile.hissAgeDb * params.age) : 0.0f);
-    width.snapTo (profile.stereoWidth);
-    asymmetry.snapTo (profile.asymmetry);
+    width.snapTo (params.mono ? 0.0f : profile.stereoWidth);
     wowSmooth.snapTo (params.wowPercent);
     flutterSmooth.snapTo (params.flutterPercent);
     driftSmooth.snapTo (params.drift);
@@ -143,15 +155,17 @@ void TapeEngine::updateControls() noexcept
     wetGain.setTarget (dbToGain (params.outputDb + f.trimDb));
     mixAmount.setTarget (params.mix);
     hissGain.setTarget (params.noise ? dbToGain (f.hissDb + f.hissAgeDb * age) : 0.0f);
-    width.setTarget (f.stereoWidth);
-    asymmetry.setTarget (f.asymmetry);
+    width.setTarget (params.mono ? 0.0f : f.stereoWidth);
+    crunch.setAmount (params.crunch);
+    chorus.setAmount (params.chorus);
+    chorus.setNoise (params.noise);
 
     // Wow and flutter, with the host tempo if Sync is on.
     WowFlutterParams wf;
     wf.wowPercent = wowSmooth.skip (kControlBlock);
     wf.flutterPercent = flutterSmooth.skip (kControlBlock);
     wf.drift = driftSmooth.skip (kControlBlock);
-    wf.wide = params.wide;
+    wf.wide = params.wide && ! params.mono;
     wf.synced = params.sync;
     if (params.sync)
     {
@@ -174,11 +188,15 @@ void TapeEngine::updateControls() noexcept
     const float hystWidth = std::clamp (f.hysteresisWidth + (0.5f - bias) * 0.5f, 0.0f, 0.95f);
     for (auto& h : hysteresis)
         h.setParams (f.saturation, hystWidth);
+    for (auto& t : transformers)
+        t.setAmount (f.transformer);
+    for (auto& t : triodes)
+        t.setParams (f.tubeDrive, f.tubeBias);
     if (std::abs (f.emphasisDb - appliedEmphasis) > 1.0e-3f)
     {
         appliedEmphasis = f.emphasisDb;
-        for (auto& b : preEmphasis) b.setHighShelf (3000.0f, f.emphasisDb, fs);
-        for (auto& b : deEmphasis) b.setHighShelf (3000.0f, -f.emphasisDb, fs);
+        for (auto& b : preEmphasis) b.setHighShelf (3000.0f, f.emphasisDb, internalFs);
+        for (auto& b : deEmphasis) b.setHighShelf (3000.0f, -f.emphasisDb, internalFs);
     }
 
     // Playback.
@@ -213,6 +231,20 @@ void TapeEngine::updateControls() noexcept
     }
 }
 
+float TapeEngine::recordChain (std::size_t ch, float x) noexcept
+{
+    // The transformer and valve amp colour the signal before the record EQ, as in a
+    // real machine. Their DC (the valve is lopsided) is blocked before the head.
+    x = transformers[ch].process (x);
+    x = tubeDc[ch].process (triodes[ch].process (x));
+
+    // kTapeHeadroom sets where the tape saturates: 0 dBFS at 0 dB Drive sits under the
+    // tape's knee, so normal levels stay clean-ish and warm.
+    x = preEmphasis[ch].process (x) * kTapeHeadroom;
+    x = hysteresis[ch].process (x);
+    return deEmphasis[ch].process (x) * (1.0f / kTapeHeadroom);
+}
+
 void TapeEngine::process (float* left, float* right, int numSamples) noexcept
 {
     if (! prepared)
@@ -241,25 +273,19 @@ void TapeEngine::process (float* left, float* right, int numSamples) noexcept
         const float dryR = dryLine[1][static_cast<std::size_t> (readPos)];
         dryPos = dryPos + 1 >= dryLen ? 0 : dryPos + 1;
 
-        // Record: Drive pushes the level into the tape; the same amount comes off after,
-        // so Drive changes the saturation, not the loudness of quiet passages.
-        // kTapeHeadroom sets where saturation starts: 0 dBFS at 0 dB Drive sits about
-        // 3 dB under the tape's knee, so normal levels stay clean-ish and warm.
-        const float g = driveGain.next() * kTapeHeadroom;
+        // Record: Drive pushes the level into the electronics and the tape; the same
+        // amount comes off after, so Drive changes the saturation, not the loudness of
+        // quiet passages.
+        // The sampler comes first, as if the loop were sampled and then bounced to tape.
+        float sl = inL, sr = inR;
+        crunch.process (sl, sr);
+
+        const float g = driveGain.next();
         const float makeup = 1.0f / g;
-        auto& h0 = hysteresis[0];
-        auto& h1 = hysteresis[1];
-        // A slightly lopsided record path adds a little second harmonic (warmth) that
-        // grows with Drive. The DC it makes is taken out after the tape.
-        const float k = asymmetry.next();
-        float l = inL * g;
-        float r = inR * g;
-        l = preEmphasis[0].process (l + k * l * l);
-        r = preEmphasis[1].process (r + k * r * r);
-        l = oversamplers[0].process (l, [&h0] (float v) { return h0.process (v); });
-        r = oversamplers[1].process (r, [&h1] (float v) { return h1.process (v); });
-        l = recordDc[0].process (deEmphasis[0].process (l) * makeup);
-        r = recordDc[1].process (deEmphasis[1].process (r) * makeup);
+        float l = oversamplers[0].process (sl * g, [this] (float v) { return recordChain (0, v); });
+        float r = oversamplers[1].process (sr * g, [this] (float v) { return recordChain (1, v); });
+        l = recordDc[0].process (l * makeup);
+        r = recordDc[1].process (r * makeup);
 
         // Transport.
         float offL, offR;
@@ -296,7 +322,9 @@ void TapeEngine::process (float* left, float* right, int numSamples) noexcept
         l = toneHigh[0].process (toneLow[0].process (lowCut[0].process (bump[0].process (l))));
         r = toneHigh[1].process (toneLow[1].process (lowCut[1].process (bump[1].process (r))));
 
-        // Narrow formats fold toward mono.
+        chorus.process (l, r);
+
+        // Narrow formats (and Mono) fold toward mono.
         const float w = width.next();
         const float mid = 0.5f * (l + r);
         const float side = 0.5f * (l - r) * w;

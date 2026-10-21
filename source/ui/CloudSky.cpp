@@ -303,7 +303,7 @@ void CloudSky::drawCached (juce::Graphics& g, const Cached& c, float opacity, ju
     }
 
     // Only the part inside the panel is kept.
-    const auto visible = c.area.getIntersection ({ -80.0f, -80.0f, width + 160.0f, height + 160.0f });
+    const auto visible = c.relative ? c.area : c.area.getIntersection ({ -80.0f, -80.0f, width + 160.0f, height + 160.0f });
     if (! juce::exactlyEqual (c.restScale, cachedScale) || ! c.rest.isValid())
     {
         const auto size = (visible * cachedScale).getSmallestIntegerContainer();
@@ -365,6 +365,8 @@ void CloudSky::rebuildCaches (float pixelScale)
     {
         closestSide (g, { -190.0f, 40.0f, 420.0f, 20.0f }, { { 0.0f, rgba (255, 240, 200, 0.8f) }, { 1.0f, rgba (255, 200, 140, 0.0f) } });
     });
+
+    sunDisc.relative = sunGlow.relative = sunFlare.relative = true;
 
     bottomShade = renderLayer ({ 0.0f, 300.0f, width, 320.0f }, res, 0.0f, -1, [] (juce::Graphics& g)
     {

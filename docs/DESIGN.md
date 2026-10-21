@@ -66,3 +66,12 @@ Each format sets its own wow, flutter, tone and noise.
 - Rate opens a menu: picking a note value turns Sync on, and Free turns it off.
 - Format buttons don't dim when bypassed (as in the mockup); the knobs, pills and settings do.
 - With Reduce Motion on, the sky holds still and changes are instant.
+
+## Decisions made while adding the vintage extras (2026-10-21)
+- Jack picked Sampler Crunch and Vintage Chorus from the suggested extras, asked for a Mono stereo mode, and for Drive to be a warm, analogue-modelled saturation.
+- Drive is now three oversampled stages, as in a tape machine's record path: an input transformer (low-end flux saturation, 45 Hz corner), a single-ended triode (asymmetric tanh with bias creep), then the tape hysteresis. Each format sets the transformer amount and the valve's drive and bias in `source/dsp/Formats.h`. The tape gets 3 dB less level than before (headroom 0.5), so the valve and transformer do more of the colour and the tape compresses less. At -6 dBFS and +18 dB Drive, Studio Reel is H2 -27, H3 -18, H5 -33, H7 -46 dB (before: mostly odd harmonics, H3 -16, H5 -26).
+- Sampler Crunch runs first, before Drive, as if the sound had been sampled before it went to tape. 0 to 100%: bits 16 down to 6; rate 46 kHz to 26 kHz at 40% (12-bit 26k, the classic SP-1200 setting), down to 5 kHz.
+- Vintage Chorus runs after Tone and before width, so Mono sums it. Delay centre 3.6 ms, swing 0.4 to 2.2 ms, rate 0.45 to 0.95 Hz, L and R in anti-phase. Dry plus wet, level-compensated.
+- Stereo is now a three-way choice (Linked, Wide, Mono) shown as text that opens a menu. Saved sessions keep their setting: the first two values are unchanged.
+- The panel has nine knobs: Crunch and Chorus sit between Age and Tone.
+- The VHS sun flare was clipped on the left: cached sun layers are now drawn in full rather than clipped to the panel's margin.

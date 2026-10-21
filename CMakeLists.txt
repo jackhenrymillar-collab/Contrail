@@ -149,7 +149,8 @@ if(CONTRAIL_BUILD_TESTS)
         tests/WowFlutterTests.cpp
         tests/TransportTests.cpp
         tests/EngineTests.cpp
-        tests/MemoryTests.cpp)
+        tests/MemoryTests.cpp
+        tests/VintageTests.cpp)
     target_link_libraries(contrail_tests PRIVATE contrail_dsp Catch2::Catch2WithMain)
 
     enable_testing()

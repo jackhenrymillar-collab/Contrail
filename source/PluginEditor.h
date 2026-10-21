@@ -35,8 +35,10 @@ private:
     void setBypassed (bool);
     void showPresetMenu();
     void showRateMenu();
+    void showStereoMenu();
     void updatePresetDisplay();
     void updateRateText();
+    void updateStereoText();
 
     ContrailProcessor& processor;
     PresetManager& presets;
@@ -55,13 +57,13 @@ private:
     std::vector<std::unique_ptr<ui::FormatButton>> formatButtons;
     std::unique_ptr<juce::ParameterAttachment> formatAttachment;
 
-    enum KnobId { wow, flutter, drift, drive, age, tone, mix, numKnobs };
+    enum KnobId { wow, flutter, drift, drive, age, crunch, chorus, tone, mix, numKnobs };
     std::array<ui::Knob, numKnobs> knobs;
 
     // Bottom row
     ui::PillToggle tapeStop { "TAPE STOP" }, sync { "SYNC" }, noise { "NOISE" };
     ui::TextChoice rate { "Rate" };
-    ui::TextToggle stereo { "Stereo", "Linked", "Wide" };
+    ui::TextChoice stereo { "Stereo" };
     ui::TextDragger output { "Output" };
 
     ui::SaveOverlay saveOverlay;

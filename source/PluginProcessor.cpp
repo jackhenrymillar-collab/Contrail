@@ -27,6 +27,8 @@ ContrailProcessor::ContrailProcessor()
     age      = state.getRawParameterValue (ParamID::age);
     tone     = state.getRawParameterValue (ParamID::tone);
     mix      = state.getRawParameterValue (ParamID::mix);
+    crunch   = state.getRawParameterValue (ParamID::crunch);
+    chorus   = state.getRawParameterValue (ParamID::chorus);
     tapeStop = state.getRawParameterValue (ParamID::tapeStop);
     sync     = state.getRawParameterValue (ParamID::sync);
     noise    = state.getRawParameterValue (ParamID::noise);
@@ -188,7 +190,11 @@ dsp::EngineParams ContrailProcessor::readParams() const noexcept
     p.sync = sync->load() > 0.5f;
     p.noise = noise->load() > 0.5f;
     p.syncRate = juce::roundToInt (rate->load());
-    p.wide = stereo->load() > 0.5f;
+    const int stereoMode = juce::roundToInt (stereo->load());
+    p.wide = stereoMode == 1;
+    p.mono = stereoMode == 2;
+    p.crunch = crunch->load() * 0.01f;
+    p.chorus = chorus->load() * 0.01f;
     p.outputDb = output->load();
     p.bias = bias->load() * 0.01f;
     p.bypass = bypass->load() > 0.5f;
